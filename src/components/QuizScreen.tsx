@@ -76,7 +76,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ answers, onAnswer, onFin
     };
 
     return (
-        <div className="flex flex-col md:flex-row gap-6 p-6 max-w-7xl mx-auto w-full h-screen pt-20">
+        <div className="flex flex-col md:flex-row gap-6 p-6 max-w-7xl mx-auto w-full min-h-screen pt-20 pb-20 md:pb-6">
             {/* Main Question Area */}
             <div className="flex-1 flex flex-col gap-6">
                 <div className="glass-panel p-6 md:p-8 flex-1 flex flex-col justify-center relative">
@@ -84,7 +84,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ answers, onAnswer, onFin
                     <div className={`
                         w-full text-center mb-6 md:mb-0 md:w-auto md:absolute md:top-4 md:right-4 
                         text-xl font-mono font-bold px-4 py-2 rounded-lg border transition-all
-                        ${timeLeft < 300 ? 'bg-red-500/20 border-red-500 text-red-400 animate-pulse' : 'bg-blue-900/50 border-blue-800 text-blue-300'}
+                        ${timeLeft < 300 ? 'bg-red-500/20 border-red-500 text-red-400 animate-pulse' : 'bg-gray-500/30 border-white-800 text-white-300'}
                     `}>
                         {formatTime(timeLeft)}
                     </div>
@@ -92,7 +92,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ answers, onAnswer, onFin
                     {/* Meta Info */}
                     <div className="mb-6 flex flex-col items-start gap-2 md:flex-row md:justify-between md:items-center text-sm text-gray-400">
                         <span className="font-medium text-white/60">Question {currentIdx + 1} of {questions.length}</span>
-                        <span className="bg-blue-900/50 text-blue-300 px-3 py-1 rounded-full text-xs font-bold border border-blue-800 self-start md:self-auto">
+                        <span className="bg-white-900/50 text-white-300 px-3 py-1 rounded-full text-xs font-bold border border-gray-500/50 self-start md:self-auto">
                             {question.type === 'multiple-choice' ? 'Multiple Choice' : 'Essay'}
                         </span>
                     </div>
@@ -110,7 +110,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ answers, onAnswer, onFin
                                     onClick={() => onAnswer(question.id, idx)}
                                     className={`flex items-center gap-4 p-4 rounded-xl border text-left transition-all ${isSelected
                                         ? 'bg-blue-600/20 border-blue-500 text-white'
-                                        : 'bg-gray-800/30 border-gray-700 hover:bg-gray-700/50 text-gray-300'
+                                        : 'bg-gray-500/30 border-white-800 hover:bg-white-700/50 text-white-300'
                                         }`}
                                 >
                                     <div className={`w-6 h-6 rounded-full border flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-blue-400 bg-blue-500' : 'border-gray-500'
@@ -154,7 +154,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ answers, onAnswer, onFin
             </div>
 
             {/* Navigation Map (Sidebar) */}
-            <div className="hidden md:flex flex-col w-80 glass-panel p-6 h-full overflow-y-auto">
+            <div className="hidden md:flex flex-col gap-6 w-80 glass-panel p-6 h-full overflow-y-auto">
                 <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                     <Circle size={12} className="fill-blue-500 text-blue-500" /> Question Map
                 </h3>
@@ -170,7 +170,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ answers, onAnswer, onFin
                                     ? 'border-blue-400 bg-blue-500/20 text-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
                                     : isAnswered
                                         ? 'bg-green-500/20 border-green-500 text-green-400'
-                                        : 'bg-gray-800 border-gray-700 text-gray-500 hover:border-gray-500'
+                                        : 'bg-gray-600/40 border-gray-700 text-gray-500 hover:border-gray-500'
                                     }`}
                             >
                                 {idx + 1}
@@ -178,7 +178,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ answers, onAnswer, onFin
                         );
                     })}
                 </div>
-                <div className="mt-8 flex flex-col gap-2 text-xs text-gray-400">
+                <div className="mt-2 flex flex-col gap-2 text-xs text-gray-400">
                     <div className="flex items-center gap-2">
                         <div className="w-3 h-3 border border-blue-400 bg-blue-500/20 rounded"></div> Saat Ini
                     </div>
@@ -192,7 +192,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ answers, onAnswer, onFin
 
                 <button
                     onClick={onFinish}
-                    className="mt-auto w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg flex items-center justify-center gap-2 transition-all mt-4"
+                    className="mt-auto w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg flex items-center justify-center gap-2 transition-all"
                 >
                     <CheckCircle size={18} /> Review & Submit
                 </button>

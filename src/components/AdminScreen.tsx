@@ -64,7 +64,7 @@ export const AdminScreen: React.FC = () => {
         <div className="min-h-screen pt-20 p-6 max-w-7xl mx-auto flex flex-col">
             <div className="glass-panel p-8 w-full">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                    <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-400 to-gray-400 bg-clip-text text-transparent">
                         Admin Dashboard
                     </h2>
                     <div className="flex gap-4">

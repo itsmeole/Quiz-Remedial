@@ -16,7 +16,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ score, totalQuestion
 
     // Retry timer logic
     const [canRetry, setCanRetry] = useState(false);
-    const [timeLeft, setTimeLeft] = useState(180); // 3 minutes
+    const [timeLeft, setTimeLeft] = useState(5); // 3 minutes
 
     useEffect(() => {
         if (!isPassed) {

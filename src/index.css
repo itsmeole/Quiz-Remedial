@@ -7,10 +7,17 @@
 
 @layer base {
   body {
-    @apply bg-gray-900 text-white font-sans antialiased;
+    @apply text-white font-sans antialiased;
+    background-image: url('./assets/bg.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
   }
 }
 
 .glass-panel {
-  @apply bg-gray-800/50 backdrop-blur-md border border-gray-700/50 shadow-xl rounded-xl;
+  @apply bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.36);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.001));
 }
