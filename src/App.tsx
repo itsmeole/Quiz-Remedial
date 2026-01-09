@@ -49,7 +49,6 @@ function App() {
 
     // Save to Supabase
     if (userData && supabase) {
-      const passed = correct >= 80; // Assuming 80 is pass mark
       // Multiply by 100/30 to get scale of 100 approx? 
       // User logic says "score" which usually implies raw count or strict 100 scale? 
       // ResultScreen shows {score} / {totalQuestions}. 
