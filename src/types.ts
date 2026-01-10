@@ -25,4 +25,5 @@ export interface QuizResult {
     class: string;
     score: number;
     passed: boolean;
+    subject: string;
 }
