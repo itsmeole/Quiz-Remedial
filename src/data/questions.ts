@@ -370,42 +370,42 @@ export const calculusQuestions: Question[] = [
     // 1-10: Limits (Limit)
     {
         id: 101,
-        text: "Nilai dari limit x mendekati 2 untuk fungsi f(x) = 2x + 1 adalah...",
+        text: "Nilai dari limit x → 2 untuk fungsi f(x) = 2x + 1 adalah...",
         type: 'multiple-choice',
         options: ["3", "4", "5", "6"],
         correctIndex: 2
     },
     {
         id: 102,
-        text: "Tentukan limit x->3 dari (x^2 - 9) / (x - 3).",
+        text: "Tentukan limit x → 3 dari (x² - 9) / (x - 3).",
         type: 'multiple-choice',
         options: ["0", "3", "6", "Tak terdefinisi"],
         correctIndex: 2 // (x-3)(x+3)/(x-3) = 6
     },
     {
         id: 103,
-        text: "Limit x->0 dari sin(x)/x adalah...",
+        text: "Limit x → 0 dari sin(x)/x adalah...",
         type: 'multiple-choice',
-        options: ["0", "1", "Infinity", "Undefined"],
+        options: ["0", "1", "∞", "Tak terdefinisi"],
         correctIndex: 1
     },
     {
         id: 104,
-        text: "Jika lim x->a f(x) = L dan lim x->a g(x) = M, maka lim x->a [f(x) + g(x)] adalah...",
+        text: "Jika lim x → a f(x) = L dan lim x → a g(x) = M, maka lim x → a [f(x) + g(x)] adalah...",
         type: 'multiple-choice',
-        options: ["L - M", "L * M", "L + M", "L / M"],
+        options: ["L - M", "L · M", "L + M", "L / M"],
         correctIndex: 2
     },
     {
         id: 105,
-        text: "Limit x->Infinity untuk 1/x adalah...",
+        text: "Limit x → ∞ untuk 1/x adalah...",
         type: 'multiple-choice',
-        options: ["Infinity", "1", "0", "-Infinity"],
+        options: ["∞", "1", "0", "-∞"],
         correctIndex: 2
     },
     {
         id: 106,
-        text: "Nilai limit x->1 dari (x^2 + 2x - 3) / (x - 1) adalah...",
+        text: "Nilai limit x → 1 dari (x² + 2x - 3) / (x - 1) adalah...",
         type: 'multiple-choice',
         options: ["2", "3", "4", "5"],
         correctIndex: 2 // (x+3)(x-1)/(x-1) -> 1+3=4
@@ -419,32 +419,32 @@ export const calculusQuestions: Question[] = [
     },
     {
         id: 108,
-        text: "Limit x->0 dari (1 - cos x) / x adalah...",
+        text: "Limit x → 0 dari (1 - cos x) / x adalah...",
         type: 'multiple-choice',
-        options: ["0", "1", "-1", "Infinity"],
+        options: ["0", "1", "-1", "∞"],
         correctIndex: 0
     },
     {
         id: 109,
         text: "Fungsi f(x) dikatakan kontinu di titik c jika...",
         type: 'multiple-choice',
-        options: ["f(c) terdefinisi", "Limit x->c f(x) ada", "Limit x->c f(x) = f(c)", "Semua benar"],
+        options: ["f(c) terdefinisi", "Limit x → c f(x) ada", "Limit x → c f(x) = f(c)", "Semua benar"],
         correctIndex: 3
     },
     {
         id: 110,
-        text: "Limit x->Infinity dari (2x^2 + 3) / (x^2 - 1) adalah...",
+        text: "Limit x → ∞ dari (2x² + 3) / (x² - 1) adalah...",
         type: 'multiple-choice',
-        options: ["1", "2", "0", "Infinity"],
+        options: ["1", "2", "0", "∞"],
         correctIndex: 1
     },
 
     // 11-20: Derivatives (Turunan)
     {
         id: 111,
-        text: "Turunan pertama dari f(x) = 3x^2 adalah...",
+        text: "Turunan pertama dari f(x) = 3x² adalah...",
         type: 'multiple-choice',
-        options: ["3x", "6x", "x^2", "6"],
+        options: ["3x", "6x", "x²", "6"],
         correctIndex: 1
     },
     {
@@ -470,35 +470,35 @@ export const calculusQuestions: Question[] = [
     },
     {
         id: 115,
-        text: "Jika f(x) = e^x, maka f'(x) adalah...",
+        text: "Jika f(x) = eˣ, maka f'(x) adalah...",
         type: 'multiple-choice',
-        options: ["x e^(x-1)", "e^x", "e", "ln(x)"],
+        options: ["x eˣ⁻¹", "eˣ", "e", "ln(x)"],
         correctIndex: 1
     },
     {
         id: 116,
         text: "Turunan dari f(x) = ln(x) adalah...",
         type: 'multiple-choice',
-        options: ["1/x", "e^x", "x", "1"],
+        options: ["1/x", "eˣ", "x", "1"],
         correctIndex: 0
     },
     {
         id: 117,
-        text: "Jika f(x) = x^n. Turunannya adalah...",
+        text: "Jika f(x) = xⁿ. Turunannya adalah...",
         type: 'multiple-choice',
-        options: ["n x^(n+1)", "n x^(n-1)", "x^n", "n x"],
+        options: ["n xⁿ⁺¹", "n xⁿ⁻¹", "xⁿ", "n x"],
         correctIndex: 1
     },
     {
         id: 118,
-        text: "Turunan kedua dari f(x) = x^3 adalah...",
+        text: "Turunan kedua dari f(x) = x³ adalah...",
         type: 'multiple-choice',
-        options: ["3x^2", "6x", "6", "0"],
+        options: ["3x²", "6x", "6", "0"],
         correctIndex: 1
     },
     {
         id: 119,
-        text: "Gradien garis singgung kurva y = x^2 di titik x=1 adalah...",
+        text: "Gradien garis singgung kurva y = x² di titik x=1 adalah...",
         type: 'multiple-choice',
         options: ["1", "2", "3", "4"],
         correctIndex: 1 // y'=2x -> 2(1)=2
@@ -514,21 +514,21 @@ export const calculusQuestions: Question[] = [
     // 21-30: Integrals (Integral)
     {
         id: 121,
-        text: "Integral tak tentu dari f(x) = 2x dx adalah...",
+        text: "Integral tak tentu dari ∫ 2x dx adalah...",
         type: 'multiple-choice',
-        options: ["x^2 + C", "2x^2 + C", "x + C", "2 + C"],
+        options: ["x² + C", "2x² + C", "x + C", "2 + C"],
         correctIndex: 0
     },
     {
         id: 122,
-        text: "Integral tentu dari 0 sampai 2 untuk f(x) = 3x^2 dx adalah...",
+        text: "Integral tentu dari 0 sampai 2 untuk ∫ 3x² dx adalah...",
         type: 'multiple-choice',
         options: ["4", "6", "8", "9"],
         correctIndex: 2 // [x^3]0->2 = 8
     },
     {
         id: 123,
-        text: "Integral dari cos(x) dx adalah...",
+        text: "Integral dari ∫ cos(x) dx adalah...",
         type: 'multiple-choice',
         options: ["sin(x) + C", "-sin(x) + C", "cos(x) + C", "-cos(x) + C"],
         correctIndex: 0
@@ -549,16 +549,16 @@ export const calculusQuestions: Question[] = [
     },
     {
         id: 126,
-        text: "Integral dari 1/x dx adalah...",
+        text: "Integral dari ∫ 1/x dx adalah...",
         type: 'multiple-choice',
-        options: ["ln|x| + C", "-1/x^2 + C", "e^x + C", "x + C"],
+        options: ["ln|x| + C", "-1/x² + C", "eˣ + C", "x + C"],
         correctIndex: 0
     },
     {
         id: 127,
         text: "Jika F(x) adalah antiturunan dari f(x), maka ∫ f(x) dx = ...",
         type: 'multiple-choice',
-        options: ["F(x) + C", "f'(x) + C", "f(x)^2 + C", "F'(x)"],
+        options: ["F(x) + C", "f'(x) + C", "f(x)² + C", "F'(x)"],
         correctIndex: 0
     },
     {
@@ -577,9 +577,9 @@ export const calculusQuestions: Question[] = [
     },
     {
         id: 130,
-        text: "Integral dari e^x dx adalah...",
+        text: "Integral dari ∫ eˣ dx adalah...",
         type: 'multiple-choice',
-        options: ["e^x + C", "x e^x + C", "e^(x+1) + C", "ln(x) + C"],
+        options: ["eˣ + C", "x eˣ + C", "eˣ⁺¹ + C", "ln(x) + C"],
         correctIndex: 0
     }
 ];
