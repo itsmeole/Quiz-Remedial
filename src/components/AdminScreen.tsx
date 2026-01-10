@@ -121,7 +121,7 @@ export const AdminScreen: React.FC = () => {
                                             <td className="p-4 text-gray-300">{row.nim}</td>
                                             <td className="p-4 text-gray-300">{row.class}</td>
                                             <td className="p-4">
-                                                <span className={`font-bold ${row.score >= 80 ? 'text-green-400' : 'text-red-400'}`}>
+                                                <span className={`font-bold ${row.score >= 75 ? 'text-green-400' : 'text-red-400'}`}>
                                                     {row.score}
                                                 </span>
                                             </td>

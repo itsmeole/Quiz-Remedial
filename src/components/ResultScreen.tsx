@@ -12,7 +12,7 @@ interface ResultScreenProps {
 
 export const ResultScreen: React.FC<ResultScreenProps> = ({ score, totalQuestions, userData, onRetry }) => {
     const percentage = Math.round((score / totalQuestions) * 100);
-    const isPassed = percentage >= 80;
+    const isPassed = percentage >= 75;
 
     // Retry timer logic
     const [canRetry, setCanRetry] = useState(false);
