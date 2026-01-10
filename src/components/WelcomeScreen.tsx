@@ -10,11 +10,12 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
     const [name, setName] = useState('');
     const [nim, setNim] = useState('');
     const [kelas, setKelas] = useState('Pagi A');
+    const [subject, setSubject] = useState<'linear-algebra' | 'calculus'>('linear-algebra');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (name && nim && kelas) {
-            onStart({ name, nim, class: kelas });
+            onStart({ name, nim, class: kelas, subject });
         }
     };
 
@@ -30,11 +31,39 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-500/20 mb-4 text-white-400">
                             <BookOpen size={32} />
                         </div>
-                        <h1 className="text-3xl font-bold mb-2">Linear Algebra Quiz</h1>
+                        <h1 className="text-3xl font-bold mb-2">Quiz Remedialku</h1>
                         <p className="text-gray-400">Silahkan isi data diri untuk memulai.</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Subject Toggle */}
+                        {/* Subject Toggle */}
+                        <div className="mb-6">
+                            <div className="bg-gray-900/40 p-1.5 rounded-xl flex relative w-full">
+                                <div
+                                    className={`absolute inset-y-1.5 w-[50%] bg-blue-600 rounded-lg shadow-lg transition-all duration-300 ease-out ${subject === 'linear-algebra' ? 'left-1.5' : 'left-[50%]'
+                                        }`}
+                                    style={{ width: 'calc(50% - 6px)' }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setSubject('linear-algebra')}
+                                    className={`relative z-10 flex-1 py-2.5 text-sm font-medium rounded-lg transition-colors duration-200 ${subject === 'linear-algebra' ? 'text-white' : 'text-gray-400 hover:text-gray-200'
+                                        }`}
+                                >
+                                    Aljabar Linear
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setSubject('calculus')}
+                                    className={`relative z-10 flex-1 py-2.5 text-sm font-medium rounded-lg transition-colors duration-200 ${subject === 'calculus' ? 'text-white' : 'text-gray-400 hover:text-gray-200'
+                                        }`}
+                                >
+                                    Kalkulus
+                                </button>
+                            </div>
+                        </div>
+
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
                                 <User size={16} /> Nama Lengkap
@@ -44,7 +73,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
                                 required
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="w-full bg-gray-900/20 border border-gray-500/50 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white-500 transition-all text-white placeholder-gray-600"
+                                className="w-full bg-gray-900/20 border border-gray-500/50 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-white placeholder-gray-600"
                                 placeholder="Masukkan nama anda"
                             />
                         </div>

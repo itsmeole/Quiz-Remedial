@@ -1,14 +1,15 @@
 import React from 'react';
 import { ChevronLeft, Send, AlertTriangle } from 'lucide-react';
-import { questions } from '../data/questions';
+import type { Question } from '../types';
 
 interface ReviewScreenProps {
+    questions: Question[];
     answers: Record<number, number>;
     onBack: () => void;
     onSubmit: () => void;
 }
 
-export const ReviewScreen: React.FC<ReviewScreenProps> = ({ answers, onBack, onSubmit }) => {
+export const ReviewScreen: React.FC<ReviewScreenProps> = ({ questions, answers, onBack, onSubmit }) => {
     const answeredCount = Object.keys(answers).length;
     const totalCount = questions.length;
     const unansweredCount = totalCount - answeredCount;
@@ -43,8 +44,8 @@ export const ReviewScreen: React.FC<ReviewScreenProps> = ({ answers, onBack, onS
                             <div
                                 key={q.id}
                                 className={`aspect-square rounded-lg flex items-center justify-center font-bold border transition-all cursor-default ${isAnswered
-                                        ? 'bg-green-500/20 border-green-500 text-green-400'
-                                        : 'bg-red-500/20 border-red-500 text-red-400'
+                                    ? 'bg-green-500/20 border-green-500 text-green-400'
+                                    : 'bg-red-500/20 border-red-500 text-red-400'
                                     }`}
                             >
                                 {idx + 1}

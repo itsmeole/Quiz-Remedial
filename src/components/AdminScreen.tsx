@@ -43,12 +43,12 @@ export const AdminScreen: React.FC = () => {
 
     const handleExport = () => {
         // Simple CSV export
-        const headers = ["Date", "Name", "NIM", "Class", "Score", "Result"];
+        const headers = ["Date", "Subject", "Name", "NIM", "Class", "Score", "Result"];
         const csvContent = "data:text/csv;charset=utf-8,"
             + headers.join(",") + "\n"
             + results.map(row => {
                 const date = new Date(row.created_at).toLocaleString();
-                return `"${date}","${row.name}","${row.nim}","${row.class}","${row.score}","${row.passed ? 'PASSED' : 'FAILED'}"`;
+                return `"${date}","${row.subject || '-'}", "${row.name}","${row.nim}","${row.class}","${row.score}","${row.passed ? 'PASSED' : 'FAILED'}"`;
             }).join("\n");
 
         const encodedUri = encodeURI(csvContent);
@@ -97,6 +97,7 @@ export const AdminScreen: React.FC = () => {
                             <thead>
                                 <tr className="border-b border-gray-700 text-gray-400 text-sm uppercase tracking-wider">
                                     <th className="p-4">Time</th>
+                                    <th className="p-4">Subject</th>
                                     <th className="p-4">Name</th>
                                     <th className="p-4">NIM</th>
                                     <th className="p-4">Class</th>
@@ -107,7 +108,7 @@ export const AdminScreen: React.FC = () => {
                             <tbody>
                                 {results.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="p-8 text-center text-gray-500">
+                                        <td colSpan={7} className="p-8 text-center text-gray-500">
                                             No results found yet.
                                         </td>
                                     </tr>
@@ -116,6 +117,9 @@ export const AdminScreen: React.FC = () => {
                                         <tr key={row.id} className="border-b border-gray-800 hover:bg-gray-800/30 transition-colors">
                                             <td className="p-4 text-sm text-gray-300">
                                                 {new Date(row.created_at).toLocaleString()}
+                                            </td>
+                                            <td className="p-4 text-gray-300 font-medium">
+                                                {row.subject || '-'}
                                             </td>
                                             <td className="p-4 font-medium text-white">{row.name}</td>
                                             <td className="p-4 text-gray-300">{row.nim}</td>

@@ -41,7 +41,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ score, totalQuestion
     };
 
     const handleDownload = async () => {
-        await generateCertificate(userData.name);
+        await generateCertificate(userData.name, userData.subject);
     };
 
     return (
@@ -63,7 +63,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({ score, totalQuestion
                     {isPassed ? 'Congratulations!' : 'Nice Try!'}
                 </h1>
                 <p className="text-xl text-gray-300 mb-8">
-                    {isPassed ? 'You have passed the quiz.' : 'Sayangnya, Anda belum mencapai nilai lulus.'}
+                    {isPassed ? 'Kamu telah lulus remedial!.' : 'Sayangnya, Anda belum mencapai nilai lulus.'}
                 </p>
 
                 <div className="bg-gray-800/50 rounded-xl p-6 mb-8 border border-gray-700">

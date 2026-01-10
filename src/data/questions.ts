@@ -1,6 +1,6 @@
 import type { Question } from '../types';
 
-export const questions: Question[] = [
+export const linearAlgebraQuestions: Question[] = [
     // 1-10: OBE, Eliminasi Gauss, Gauss-Jordan, Cramer
     {
         id: 1,
@@ -363,5 +363,223 @@ export const questions: Question[] = [
             "Tidak bisa dihitung"
         ],
         correctIndex: 0 // Calculated ~0.34559
+    }
+];
+
+export const calculusQuestions: Question[] = [
+    // 1-10: Limits (Limit)
+    {
+        id: 101,
+        text: "Nilai dari limit x mendekati 2 untuk fungsi f(x) = 2x + 1 adalah...",
+        type: 'multiple-choice',
+        options: ["3", "4", "5", "6"],
+        correctIndex: 2
+    },
+    {
+        id: 102,
+        text: "Tentukan limit x->3 dari (x^2 - 9) / (x - 3).",
+        type: 'multiple-choice',
+        options: ["0", "3", "6", "Tak terdefinisi"],
+        correctIndex: 2 // (x-3)(x+3)/(x-3) = 6
+    },
+    {
+        id: 103,
+        text: "Limit x->0 dari sin(x)/x adalah...",
+        type: 'multiple-choice',
+        options: ["0", "1", "Infinity", "Undefined"],
+        correctIndex: 1
+    },
+    {
+        id: 104,
+        text: "Jika lim x->a f(x) = L dan lim x->a g(x) = M, maka lim x->a [f(x) + g(x)] adalah...",
+        type: 'multiple-choice',
+        options: ["L - M", "L * M", "L + M", "L / M"],
+        correctIndex: 2
+    },
+    {
+        id: 105,
+        text: "Limit x->Infinity untuk 1/x adalah...",
+        type: 'multiple-choice',
+        options: ["Infinity", "1", "0", "-Infinity"],
+        correctIndex: 2
+    },
+    {
+        id: 106,
+        text: "Nilai limit x->1 dari (x^2 + 2x - 3) / (x - 1) adalah...",
+        type: 'multiple-choice',
+        options: ["2", "3", "4", "5"],
+        correctIndex: 2 // (x+3)(x-1)/(x-1) -> 1+3=4
+    },
+    {
+        id: 107,
+        text: "Limit kiri dan limit kanan harus ... agar limit fungsi ada.",
+        type: 'multiple-choice',
+        options: ["Berbeda", "Sama", "Nol", "Tak hingga"],
+        correctIndex: 1
+    },
+    {
+        id: 108,
+        text: "Limit x->0 dari (1 - cos x) / x adalah...",
+        type: 'multiple-choice',
+        options: ["0", "1", "-1", "Infinity"],
+        correctIndex: 0
+    },
+    {
+        id: 109,
+        text: "Fungsi f(x) dikatakan kontinu di titik c jika...",
+        type: 'multiple-choice',
+        options: ["f(c) terdefinisi", "Limit x->c f(x) ada", "Limit x->c f(x) = f(c)", "Semua benar"],
+        correctIndex: 3
+    },
+    {
+        id: 110,
+        text: "Limit x->Infinity dari (2x^2 + 3) / (x^2 - 1) adalah...",
+        type: 'multiple-choice',
+        options: ["1", "2", "0", "Infinity"],
+        correctIndex: 1
+    },
+
+    // 11-20: Derivatives (Turunan)
+    {
+        id: 111,
+        text: "Turunan pertama dari f(x) = 3x^2 adalah...",
+        type: 'multiple-choice',
+        options: ["3x", "6x", "x^2", "6"],
+        correctIndex: 1
+    },
+    {
+        id: 112,
+        text: "Jika f(x) = sin(x), maka f'(x) adalah...",
+        type: 'multiple-choice',
+        options: ["cos(x)", "-cos(x)", "sin(x)", "-sin(x)"],
+        correctIndex: 0
+    },
+    {
+        id: 113,
+        text: "Turunan dari konstanta k adalah...",
+        type: 'multiple-choice',
+        options: ["k", "1", "0", "x"],
+        correctIndex: 2
+    },
+    {
+        id: 114,
+        text: "Aturan rantai (Chain Rule) digunakan untuk mencari turunan dari...",
+        type: 'multiple-choice',
+        options: ["Fungsi penjumlahan", "Fungsi perkalian", "Fungsi komposisi", "Fungsi pembagian"],
+        correctIndex: 2
+    },
+    {
+        id: 115,
+        text: "Jika f(x) = e^x, maka f'(x) adalah...",
+        type: 'multiple-choice',
+        options: ["x e^(x-1)", "e^x", "e", "ln(x)"],
+        correctIndex: 1
+    },
+    {
+        id: 116,
+        text: "Turunan dari f(x) = ln(x) adalah...",
+        type: 'multiple-choice',
+        options: ["1/x", "e^x", "x", "1"],
+        correctIndex: 0
+    },
+    {
+        id: 117,
+        text: "Jika f(x) = x^n. Turunannya adalah...",
+        type: 'multiple-choice',
+        options: ["n x^(n+1)", "n x^(n-1)", "x^n", "n x"],
+        correctIndex: 1
+    },
+    {
+        id: 118,
+        text: "Turunan kedua dari f(x) = x^3 adalah...",
+        type: 'multiple-choice',
+        options: ["3x^2", "6x", "6", "0"],
+        correctIndex: 1
+    },
+    {
+        id: 119,
+        text: "Gradien garis singgung kurva y = x^2 di titik x=1 adalah...",
+        type: 'multiple-choice',
+        options: ["1", "2", "3", "4"],
+        correctIndex: 1 // y'=2x -> 2(1)=2
+    },
+    {
+        id: 120,
+        text: "Titik stasioner dicapai ketika turunan pertama bernilai...",
+        type: 'multiple-choice',
+        options: ["1", "0", "Positif", "Negatif"],
+        correctIndex: 1
+    },
+
+    // 21-30: Integrals (Integral)
+    {
+        id: 121,
+        text: "Integral tak tentu dari f(x) = 2x dx adalah...",
+        type: 'multiple-choice',
+        options: ["x^2 + C", "2x^2 + C", "x + C", "2 + C"],
+        correctIndex: 0
+    },
+    {
+        id: 122,
+        text: "Integral tentu dari 0 sampai 2 untuk f(x) = 3x^2 dx adalah...",
+        type: 'multiple-choice',
+        options: ["4", "6", "8", "9"],
+        correctIndex: 2 // [x^3]0->2 = 8
+    },
+    {
+        id: 123,
+        text: "Integral dari cos(x) dx adalah...",
+        type: 'multiple-choice',
+        options: ["sin(x) + C", "-sin(x) + C", "cos(x) + C", "-cos(x) + C"],
+        correctIndex: 0
+    },
+    {
+        id: 124,
+        text: "Luas daerah di bawah kurva y=x dari x=0 sampai x=4 adalah...",
+        type: 'multiple-choice',
+        options: ["4", "8", "16", "2"],
+        correctIndex: 1 // 1/2 * 4 * 4 = 8
+    },
+    {
+        id: 125,
+        text: "Rumus Integral Parsial adalah...",
+        type: 'multiple-choice',
+        options: ["∫ u dv = uv - ∫ v du", "∫ u dv = uv + ∫ v du", "∫ u dv = u - v", "∫ u dv = uv"],
+        correctIndex: 0
+    },
+    {
+        id: 126,
+        text: "Integral dari 1/x dx adalah...",
+        type: 'multiple-choice',
+        options: ["ln|x| + C", "-1/x^2 + C", "e^x + C", "x + C"],
+        correctIndex: 0
+    },
+    {
+        id: 127,
+        text: "Jika F(x) adalah antiturunan dari f(x), maka ∫ f(x) dx = ...",
+        type: 'multiple-choice',
+        options: ["F(x) + C", "f'(x) + C", "f(x)^2 + C", "F'(x)"],
+        correctIndex: 0
+    },
+    {
+        id: 128,
+        text: "Teorema Dasar Kalkulus menghubungkan...",
+        type: 'multiple-choice',
+        options: ["Limit dan Turunan", "Turunan dan Integral", "Limit dan Integral", "Fungsi dan Relasi"],
+        correctIndex: 1
+    },
+    {
+        id: 129,
+        text: "Volume benda putar dapat dihitung menggunakan...",
+        type: 'multiple-choice',
+        options: ["Integral", "Turunan", "Limit", "Matriks"],
+        correctIndex: 0
+    },
+    {
+        id: 130,
+        text: "Integral dari e^x dx adalah...",
+        type: 'multiple-choice',
+        options: ["e^x + C", "x e^x + C", "e^(x+1) + C", "ln(x) + C"],
+        correctIndex: 0
     }
 ];

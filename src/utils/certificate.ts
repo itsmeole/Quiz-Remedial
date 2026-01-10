@@ -1,10 +1,10 @@
 import { jsPDF } from 'jspdf';
 
-export const generateCertificate = async (userName: string) => {
+export const generateCertificate = async (userName: string, subject: string) => {
     // We don't create doc here because we need to create it after loading image dimensions if we want to be precise, 
     // or just use standard A4. logic below creates a new instance.
 
-    const imgPath = '/Sertifikat.png';
+    const imgPath = subject === 'calculus' ? '/sertifikat_kalkulus.png' : '/Sertifikat.png';
 
     try {
         const response = await fetch(imgPath);

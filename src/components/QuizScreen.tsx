@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, CheckCircle, Circle } from 'lucide-react';
-import { questions } from '../data/questions';
+import type { Question } from '../types';
 
 interface QuizScreenProps {
+    questions: Question[];
     answers: Record<number, number>;
     onAnswer: (questionId: number, answerIndex: number) => void;
     onFinish: () => void;
     onAutoSubmit: () => void;
 }
 
-export const QuizScreen: React.FC<QuizScreenProps> = ({ answers, onAnswer, onFinish, onAutoSubmit }) => {
+export const QuizScreen: React.FC<QuizScreenProps> = ({ questions, answers, onAnswer, onFinish, onAutoSubmit }) => {
     const [currentIdx, setCurrentIdx] = useState(0);
     const [timeLeft, setTimeLeft] = useState(3600); // 1 hour in seconds
     const [violation, setViolation] = useState<string | null>(null);
