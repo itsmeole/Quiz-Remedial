@@ -63,7 +63,7 @@ function App() {
       }
 
       if (count !== null && count >= MAX_STRIKES) {
-        setBlockedReason("Anda telah gagal atau melanggar aturan sebanyak 3 kali. Hubungi dosen pengampu untuk membuka akses.");
+        setBlockedReason("Anda telah mencapai jumlah maksimum percobaan. Hubungi dosen pengampu atau asisten dosen untuk membuka akses.");
         return;
       }
     }
