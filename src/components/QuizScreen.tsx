@@ -33,27 +33,27 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ questions, answers, onAn
     }, [onAutoSubmit]);
 
     // Anti-Cheat: Tab Switch / Focus Loss
-    React.useEffect(() => {
-        const handleVisibilityChange = () => {
-            if (document.hidden && !violation) {
-                setViolation("Terdeteksi berpindah tab!");
-            }
-        };
+    // React.useEffect(() => {
+    //     const handleVisibilityChange = () => {
+    //         if (document.hidden && !violation) {
+    //             setViolation("Terdeteksi berpindah tab!");
+    //         }
+    //     };
 
-        const handleBlur = () => {
-            if (!violation) {
-                setViolation("Terdeteksi meninggalkan jendela ujian!");
-            }
-        };
+    //     const handleBlur = () => {
+    //         if (!violation) {
+    //             setViolation("Terdeteksi meninggalkan jendela ujian!");
+    //         }
+    //     };
 
-        document.addEventListener("visibilitychange", handleVisibilityChange);
-        window.addEventListener("blur", handleBlur);
+    //     document.addEventListener("visibilitychange", handleVisibilityChange);
+    //     window.addEventListener("blur", handleBlur);
 
-        return () => {
-            document.removeEventListener("visibilitychange", handleVisibilityChange);
-            window.removeEventListener("blur", handleBlur);
-        };
-    }, [onAutoSubmit, violation]);
+    //     return () => {
+    //         document.removeEventListener("visibilitychange", handleVisibilityChange);
+    //         window.removeEventListener("blur", handleBlur);
+    //     };
+    // }, [onAutoSubmit, violation]);
 
     const formatTime = (seconds: number) => {
         const h = Math.floor(seconds / 3600);
