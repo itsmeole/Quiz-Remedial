@@ -13,7 +13,7 @@ interface QuizScreenProps {
 export const QuizScreen: React.FC<QuizScreenProps> = ({ questions, answers, onAnswer, onFinish, onAutoSubmit }) => {
     const [currentIdx, setCurrentIdx] = useState(0);
     const [timeLeft, setTimeLeft] = useState(3600); // 1 hour in seconds
-    const [violation, setViolation] = useState<string | null>(null);
+    // const [violation, setViolation] = useState<string | null>(null);
     const question = questions[currentIdx];
 
     // Timer Logic
@@ -200,7 +200,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ questions, answers, onAn
             </div>
 
             {/* Violation Modal */}
-            {violation && (
+            {/* {violation && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                     <div className="glass-panel p-8 max-w-md w-full text-center border-red-500/50 shadow-[0_0_50px_rgba(239,68,68,0.2)]">
                         <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500">
@@ -222,7 +222,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ questions, answers, onAn
                         </button>
                     </div>
                 </div>
-            )}
+            )} */}
         </div>
     );
 };
