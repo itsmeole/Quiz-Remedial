@@ -45,7 +45,7 @@ function App() {
         .limit(1);
 
       if (passedData && passedData.length > 0) {
-        setBlockedReason("Selamat! Anda sudah lulus remedial ini sebelumnya. Tidak perlu mengerjakan lagi.");
+        setBlockedReason("Anda sudah lulus remedial ini sebelumnya. Tidak perlu mengerjakan lagi.");
         return;
       }
 
