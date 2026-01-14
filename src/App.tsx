@@ -63,7 +63,7 @@ function App() {
       }
 
       if (count !== null && count >= MAX_STRIKES) {
-        setBlockedReason("Anda telah mencapai jumlah maksimum percobaan. Hubungi dosen pengampu atau asisten dosen untuk membuka akses.");
+        setBlockedReason("Anda telah mencapai jumlah maksimum percobaan. Silahkan hubungi dosen pengampu atau asisten dosen untuk membuka akses.");
         return;
       }
     }
