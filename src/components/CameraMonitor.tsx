@@ -10,10 +10,8 @@ interface CameraMonitorProps {
 
 export const CameraMonitor: React.FC<CameraMonitorProps> = ({ onViolation }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
     const overlayRef = useRef<HTMLCanvasElement>(null);
     const [status, setStatus] = useState<'loading' | 'active' | 'error' | 'denied'>('loading');
-    const [apiStatus, setApiStatus] = useState<'connecting' | 'online' | 'offline'>('connecting');
     const [debugMsg, setDebugMsg] = useState<string>("Initializing...");
 
     useEffect(() => {
@@ -54,11 +52,9 @@ export const CameraMonitor: React.FC<CameraMonitorProps> = ({ onViolation }) => 
                     setDebugMsg(`Downloading AI Model: ${percent}%`);
                 });
                 
-                setApiStatus('online');
                 setDebugMsg("AI Local (YOLOv8) Active");
             } catch (e) {
                 console.error("Model load error:", e);
-                setApiStatus('offline');
                 setDebugMsg("AI Local Gagal Dimuat");
                 return;
             }
