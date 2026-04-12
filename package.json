@@ -17,6 +17,7 @@
     "framer-motion": "^12.25.0",
     "jspdf": "^4.0.0",
     "lucide-react": "^0.562.0",
+    "onnxruntime-web": "^1.24.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
@@ -25,6 +26,7 @@
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
     "@vitejs/plugin-react": "^5.1.1",
     "autoprefixer": "^10.4.23",
     "eslint": "^9.39.1",

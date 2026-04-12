@@ -27,3 +27,10 @@ export interface QuizResult {
     passed: boolean;
     subject: string;
 }
+
+export interface Student {
+    id: number;
+    name: string;
+    nim: string;
+    class: string;
+}

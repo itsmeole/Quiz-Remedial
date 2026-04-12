@@ -1,0 +1,166 @@
+TAHAPAN CAPSTONE PROJECT: QUIZ-APP WITH AI PROCTORING & CORRECTION
+
+================================================================================
+BAGIAN 1: PENDAHULUAN & FILOSOFI
+================================================================================
+
+Tujuan: Menghasilkan solusi inovatif berupa produk (MVP) sistem ujian online yang memiliki integritas tinggi menggunakan teknologi AI monitoring dan efisiensi koreksi menggunakan LLM API.
+Target: Meningkatkan kemampuan pemecahan masalah (critical thinking), keamanan data, integritas akademik (anti-cheat), dan skalabilitas aplikasi web modern (Edge AI & Serverless).
+
+[GAMBAR 1.1: Screenshot Landing Page Aplikasi Quiz-Remedial yang menampilkan antarmuka utama]
+
+================================================================================
+BAGIAN 2: TAHAPAN PROYEK (TIMELINE)
+================================================================================
+
+Fase I: Inisiasi
+- Kegiatan Utama: Pembentukan tim & brainstorming ide, identifikasi celah pada sistem ujian konvensional, penentuan framework (React) dan strategi AI (Client-side vs Server-side).
+- Output: Proposal Proyek yang mendefinisikan scope (Object Detection & NLP Scoring).
+
+Fase II: Desain
+- Kegiatan Utama: Perancangan arsitektur sistem berbasis Serverless, pembuatan skema Relational Database di Supabase, dan desain antarmuka pengguna (UI/UX) untuk halaman ujian serta halaman Admin.
+- Output: Blue Print Arsitektur, Entity Relationship Diagram (ERD), & Prototype UI.
+
+Fase III: Eksekusi
+- Kegiatan Utama: Pengembangan produk (Coding) Frontend menggunakan React & Vite, integrasi ONNX Runtime Web untuk menjalankan model YOLOv8 langsung di browser (Edge AI), implementasi skrip grading esai otomatis via API eksternal, dan integrasi dengan Supabase Backend-as-a-Service.
+- Output: Produk Alpha/Beta (Functional Web Application).
+
+Fase IV: Finalisasi
+- Kegiatan Utama: Pengujian (Testing) akurasi deteksi "Cell Phone", optimasi performa *letterboxing* kamera agar *bounding box* presisi, *bug fixing* pada perhitungan IOU, sinkronisasi state React, dan penyusunan dokumentasi akhir.
+- Output: Laporan Akhir & Dokumen Presentasi Proyek.
+
+================================================================================
+BAGIAN 3: STRUKTUR LAPORAN AKHIR
+================================================================================
+
+--------------------------------------------------------------------------------
+BAB 1: PENDAHULUAN
+--------------------------------------------------------------------------------
+
+1.1 Latar Belakang
+   Perkembangan teknologi digital telah mendorong penggunaan sistem ujian berbasis web secara luas di berbagai institusi pendidikan. Namun, implementasi ujian secara daring (online) masih menghadapi tantangan besar terkait integritas akademik. Kelemahan utama terletak pada sulitnya melakukan pengawasan fisik terhadap peserta, seperti penggunaan perangkat komunikasi (smartphone) yang tidak terdeteksi oleh sistem pengaman browser standar (seperti deteksi *blur/tab-switch*). 
+   
+   Sebagian besar platform kuis saat ini tidak mampu memantau aktivitas fisik secara real-time di depan kamera tanpa membebani server secara finansial, karena pemrosesan Computer Vision di server cloud sangat mahal dan menimbulkan *latency*. Di sisi lain, proses koreksi soal esai masih sangat bergantung pada tenaga pengajar, yang sering kali membutuhkan waktu lama dan memiliki tingkat subjektivitas tinggi.
+   
+   Oleh karena itu, diperlukan sebuah sistem kuis inovatif yang menggabungkan kecanggihan Artificial Intelligence (AI) melalui pendekatan "Edge AI" untuk pemantauan objek secara lokal di browser, serta integrasi Natural Language Processing (NLP) berbasis Cloud untuk evaluasi esai yang objektif.
+
+1.2 Rumusan Masalah
+   1. Bagaimana merancang dan membangun sistem deteksi kecurangan fisik (penggunaan smartphone) secara real-time di browser (Client-Side) tanpa bergantung pada server GPU eksternal untuk pemrosesan gambar?
+   2. Bagaimana mengimplementasikan sistem koreksi otomatis untuk soal esai berbasis tingkat kemiripan makna (Semantic Similarity) melalui integrasi Large Language Model (LLM) API?
+   3. Bagaimana membangun ekosistem aplikasi ujian yang *scalable* dan *cost-effective* menggunakan arsitektur Serverless (Frontend React + BaaS Supabase)?
+
+1.3 Batasan Masalah
+   Agar pengembangan sistem tetap terarah, batasan masalah ditetapkan sebagai berikut:
+   - Platform: Sistem dibangun sebagai Single Page Application (SPA) berbasis web menggunakan antarmuka Vite + React.
+   - Backend & Database: Menggunakan layanan Backend-as-a-Service (BaaS) Supabase (PostgreSQL) tanpa pembuatan server REST API *custom* (Python/Node.js) untuk manajemen sesi dan penyimpanan data.
+   - AI Monitoring: Pemrosesan Computer Vision dilakukan di sisi klien (*Edge Computing/On-Device AI*) menggunakan library `onnxruntime-web` dan model pre-trained YOLOv8 berformat `.onnx`.
+   - Deteksi Kecurangan Fisik: Fokus pada Object Detection dengan kelas target spesifik yaitu `cell phone` dan `person`.
+   - AI Correction: Sistem koreksi esai tidak dilatih dari nol, melainkan memanfaatkan API (Application Programming Interface) dari penyedia layanan Cloud AI/LLM.
+
+1.4 Tujuan Proyek
+   - Tujuan Umum: Menyelesaikan masalah kurangnya pengawasan dan inefisiensi penilaian pada ujian daring dengan teknologi AI hibrida (Edge Vision & Cloud NLP).
+   - Tujuan Khusus:
+     1. Mengimplementasikan Client-Side AI Monitoring untuk mendeteksi *cell phone* dengan tingkat *confidence* minimum 80% guna memicu pelanggaran otomatis.
+     2. Membangun sistem sinkronisasi nilai akhir secara real-time ke database Supabase setelah peserta menyelesaikan ujian atau terkena pelanggaran.
+     3. Merancang Dashboard Admin untuk mengelola bank soal, memantau *logs* pelanggaran, dan merekapitulasi skor hasil koreksi AI.
+
+1.5 Manfaat Proyek
+   - Bagi Pengguna (Peserta): Mendapatkan pengalaman ujian yang *seamless* tanpa perlu menginstal *software proctoring* pihak ketiga, cukup mengakses melalui browser modern.
+   - Bagi Institusi (Pengajar): Meningkatkan integritas hasil ujian, mengurangi secara drastis waktu yang dihabiskan untuk mengoreksi ratusan esai secara manual, dan mengurangi biaya operasional server karena pengolahan citra dilakukan di perangkat peserta.
+
+--------------------------------------------------------------------------------
+BAB 2: TINJAUAN PUSTAKA & ANALISIS MASALAH
+--------------------------------------------------------------------------------
+
+2.1 Landasan Teori
+   2.1.1 Arsitektur Serverless & Edge Computing
+      *Serverless Computing* adalah model eksekusi *cloud-computing* di mana penyedia *cloud* secara dinamis mengelola alokasi server, memungkinkan pengembang fokus pada kode aplikasi. *Edge Computing* memindahkan komputasi lebih dekat ke sumber data (contoh: browser pengguna), yang dalam proyek ini digunakan mengolah frame kamera secara lokal untuk mengurangi *latency* jaringan dan beban server.
+
+   2.1.2 Algoritma YOLO (You Only Look Once) versi 8
+      YOLOv8 adalah *state-of-the-art* (SOTA) dalam arsitektur deteksi objek *real-time*. Berbeda dengan sistem *two-stage detector*, YOLO memetakan *bounding box* dan probabilitas kelas dalam satu evaluasi jaringan saraf. Format ONNX (Open Neural Network Exchange) digunakan untuk mengekspor model PyTorch (.pt) agar dapat dijalankan di berbagai *runtime*, termasuk lingkungan web (WASM/WebGL).
+
+   2.1.3 Natural Language Processing (NLP) & Semantic Similarity
+      *Semantic Similarity* adalah metrik komputasional berdasarkan ruang vektor yang mengukur seberapa dekat kemiripan makna antara dua dokumen teks. API LLM modern menggunakan arsitektur Transformer untuk menghasilkan representasi *embedding* yang tidak hanya mencocokkan *keyword*, tetapi juga memahami konteks kalimat untuk memberikan nilai persentase kedekatan jawaban pengguna dengan kunci jawaban yang ideal.
+
+2.2 Analisis Pembanding (Kompetitor)
+   Sistem kuis konvensional seperti Google Forms, Quizizz, atau Moodle (tanpa plugin proctoring berbayar) biasanya hanya menggunakan event listener browser (`visibilitychange` atau `blur`) untuk mendeteksi apabila peserta membuka *tab* baru. Namun, platform tersebut buta terhadap situasi di dunia nyata, misalnya jika peserta menyontek menggunakan smartphone di tangannya. Proyek ini memecahkan celah keamanan fatal tersebut dengan teknologi pemantauan bawaan langsung dari web.
+
+--------------------------------------------------------------------------------
+BAB 3: PERANCANGAN SISTEM
+--------------------------------------------------------------------------------
+
+3.1 Alur Kerja (Workflow)
+   Sistem memiliki alur utama sebagai berikut:
+   1. Peserta menginputkan nama/NIM tanpa otentikasi rumit.
+   2. Sistem meminta izin kamera. Web application mengunduh model YOLOv8 secara asinkron (ditampilkan progres loading persentase).
+   3. Setelah model dimuat dalam memori WASM, ujian dimulai. Timer JavaScript berjalan secara independen.
+   4. Kamera mengambil frame setiap 100ms. AI melakukan *inference*.
+   5. Jika object "Cell Phone" dengan confidence > 0.8 terdeteksi ATAU event *blur* (*tab-switching*) terdeteksi, trigger `onViolation` akan aktif.
+   6. Sebuah modal pemblokiran muncul, mengunci *state* ujian, dan memaksa peserta mengirim jawaban yang telah ada ke server Supabase.
+   
+   [GAMBAR 3.1: Flowchart alur kerja aplikasi mulai dari input data hingga trigger deteksi pelanggaran]
+
+3.2 Arsitektur Sistem Hibrida (Hybrid AI Architecture)
+   Sistem dipecah menjadi beberapa *layer*:
+   - Presentation Layer: Komponen React (`QuizScreen.tsx`, `CameraMonitor.tsx`).
+   - Inference Layer (Local): Instansiasi `onnxruntime-web` di browser. Melakukan *tensor preparation*, eksekusi propagasi maju, dan pasca-pemrosesan (NMS).
+   - Data & Authentication Layer (Cloud): Layanan Supabase yang menghandle RESTful insert/select operasi data soal dan nilai siswa secara persisten.
+
+3.3 Perancangan Model AI (Computer Vision Pipeline)
+   Mekanisme deteksi kamera tidak menggunakan library *wrapper* yang berat, melainkan langsung menggunakan core matematika ONNX:
+   1. Image Acquisition: Sinkronisasi resolusi video asli dan elemen HTML5 Canvas.
+   2. Preprocessing (Letterboxing): Frame diformat ulang ke resolusi ekspektasi model (640x640) menggunakan *padding* piksel hitam agar rasio aspek gambar tetap terjaga (tidak merusak proporsi objek). Normalisasi piksel dari `[0, 255]` menjadi float `[0.0, 1.0]`.
+   3. Inference Session: Eksekusi *Graph* ONNX.
+   4. Post-processing: Matriks output dari YOLOv8 diurai (*decoding*). Kalkulasi rotasi matriks *(transpose)* untuk memisahkan koordinat *bounding box* dan probabilitas kelas (80 kelas COCO dataset).
+   5. NMS (Non-Maximum Suppression): Menggunakan fungsi Intersection Over Union (IOU) dengan ambang batas (contoh: 0.45) untuk menghapus kotak deteksi yang redundan pada objek yang berdekatan.
+   6. Coordinate Rescaling: Memetakan kembali koordinat dari kotak 640x640 ke rasio layar kamera asli pengguna sebelum digambar di kanvas *overlay* (mempertimbangkan efek cermin ganda).
+
+3.4 Perancangan UI (User Interface)
+   - Pendekatan desain menggunakan *Glassmorphism*, palet warna gelap (Dark Mode), dan indikator visual status AI (Online/Loading). Navigasi peta soal berada terpisah untuk memudahkan pengguna melompat antar soal.
+   
+   [GAMBAR 3.2: Desain Wireframe Halaman Ujian]
+   [GAMBAR 3.3: Desain Wireframe Halaman Dashboard Admin]
+
+3.5 Perancangan Basis Data (Supabase ERD)
+   Menggunakan arsitektur RDBMS (PostgreSQL). Tabel krusial mencakup:
+   - `questions`: id (uuid), text (text), options (jsonb), correct_answer (text), type (varchar).
+   - `submissions`: id (uuid), user_name (varchar), total_score (float), is_violation (boolean), violation_reason (text), created_at (timestamp).
+
+--------------------------------------------------------------------------------
+BAB 4: IMPLEMENTASI & PENGUJIAN
+--------------------------------------------------------------------------------
+
+4.1 Implementasi Antarmuka
+   Implementasi antarmuka menggunakan komponen fungsional React dengan Hooks (`useState`, `useEffect`, `useRef`). 
+   - `CameraMonitor.tsx` bertanggung jawab atas manipulasi elemen `<video>` dan `<canvas>` secara asinkron. Terdapat mekanisme pengecekan status inisialisasi WASM untuk mencegah memory leak.
+   - `QuizScreen.tsx` menangani state jawaban soal, sisa waktu hitung mundur, dan *event listener* keamanan browser level (blur/visibility).
+   
+   [GAMBAR 4.1: Screenshot fitur Kamera Monitor dengan AI Local terinisialisasi dan mendeteksi label "person"]
+
+4.2 Pengujian Sistem (System Testing)
+   Metodologi pengujian menggunakan teknik *Black Box Testing* untuk keamanan:
+   1. Skenario Pindah Tab: Mengklik luar window aplikasi. (Hasil yang diharapkan: Modal peringatan pelanggaran muncul seketika). STATUS: BERHASIL.
+   2. Skenario AI Proctoring (Hardware): Peserta mengarahkan handphone fisik ke arah webcam. (Hasil yang diharapkan: AI memproses *frame*, mengidentifikasi *bounding box* ke ID kelas 67 (cell phone) dengan *confidence score* > 0.8, lalu memicu metode pemblokiran dari komponen induk (QuizScreen)). 
+   
+   [GAMBAR 4.2: Screenshot Kamera Monitor mendeteksi "cell phone" (kotak hijau) dan memicu modal peringatan merah "Pelanggaran Terdeteksi!"]
+   
+   STATUS: BERHASIL. Akurasi deteksi tercapai dalam fraksi sekon (fps tinggi) di browser klien modern (Chrome/Edge v90+). Masalah rendering teks *mirrored/terbalik* pada kanvas overlay juga berhasil diselesaikan melalui pembalikan konteks dimensi X (translation scale -1).
+   3. Skenario Koreksi Esai: Simulasi API call dengan mengirimkan string jawaban peserta dan string kunci referensi (Hasil yang diharapkan: Kembalian nilai float presisi berupa persentase relevansi konteks). STATUS: (Sedang dalam peninjauan integrasi module/opsional jika Backend API tersedia).
+
+--------------------------------------------------------------------------------
+BAB 5: PENUTUP
+--------------------------------------------------------------------------------
+
+5.1 Kesimpulan
+   Proyek Capstone ini berhasil mensinergikan teknologi web modern dengan *machine learning*. Alih-alih merancang satu server monolitik, aplikasi mendistribusikan beban pemrosesan *Computer Vision* (YOLOv8) ke sisi klien web (*Edge*) melalui ONNX Runtime. Hasilnya adalah sebuah aplikasi ujian berbiaya hosting sangat rendah (berbasis Vite Serverless Static Hosting), didukung oleh database *real-time* Supabase, namun memiliki tingkat pengawasan ketat (pendeteksi pindah jendela operasi dan AI pendeteksi objek dilarang/HP).
+   Implementasi komputasi *letterboxing* matriks *array buffer* di dalam skrip `yolo_utils.ts` telah terbukti krusial untuk mencegah distorsi *aspect ratio*, memastikan *inferencing* yang jauh lebih presisi dibandingkan pemrosesan elemen canvas murni, menggaransi integritas hasil kuis.
+
+5.2 Saran
+   Berdasarkan pengujian eksekusi saat ini, direkomendasikan beberapa penelitian lanjutan:
+   1. Penggantian *deployment* arsitektur server dari lokal IP (*Network* Dev HTTPS) menuju Vercel/Netlify agar aplikasi diakses secara global.
+   2. Penambahan model *Face Verification* sebelum memulai kuis untuk menghindari perjokian fisik.
+   3. Menyempurnakan dasbor rekapitulasi nilai untuk pihak *Admin* dengan visualisasi plot grafik kemajuan kelas.
+
+================================================================================
+DOKUMENTASI SELESAI
+================================================================================

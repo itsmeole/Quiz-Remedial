@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, CheckCircle, Circle, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, Circle, Clock, AlertCircle } from 'lucide-react';
 import type { Question } from '../types';
+import { CameraMonitor } from './CameraMonitor';
 
 interface QuizScreenProps {
     questions: Question[];
@@ -20,17 +21,56 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ questions, answers, onAn
     // Timer Logic - REMOVED (Handled in App.tsx)
 
     // Anti-Cheat: Tab Switch / Focus Loss
+    const [strikeCount, setStrikeCount] = useState(0);
+    const [warning, setWarning] = useState<string | null>(null);
+    const [modalTimer, setModalTimer] = useState(10);
+
+    // Modal Timer Logic
+    const autoSubmitRef = React.useRef(onAutoSubmit);
+    autoSubmitRef.current = onAutoSubmit;
+
     React.useEffect(() => {
+        let interval: any;
+        if (warning || violation) {
+            setModalTimer(10);
+            interval = setInterval(() => {
+                setModalTimer((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(interval);
+                        if (violation) {
+                            autoSubmitRef.current();
+                        } else if (warning) {
+                            setWarning(null);
+                        }
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [warning, violation]);
+
+    React.useEffect(() => {
+        const handleViolation = (msg: string) => {
+            if (violation) return; 
+
+            if (strikeCount === 0) {
+                setWarning(msg);
+                setStrikeCount(1);
+            } else {
+                setViolation(msg);
+            }
+        };
+
         const handleVisibilityChange = () => {
-            if (document.hidden && !violation) {
-                setViolation("Terdeteksi berpindah tab!");
+            if (document.hidden) {
+                handleViolation("Terdeteksi berpindah tab!");
             }
         };
 
         const handleBlur = () => {
-            if (!violation) {
-                setViolation("Terdeteksi meninggalkan jendela ujian!");
-            }
+            handleViolation("Terdeteksi meninggalkan jendela ujian!");
         };
 
         document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -40,7 +80,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ questions, answers, onAn
             document.removeEventListener("visibilitychange", handleVisibilityChange);
             window.removeEventListener("blur", handleBlur);
         };
-    }, [onAutoSubmit, violation]);
+    }, [strikeCount, violation]);
 
     const formatTime = (seconds: number) => {
         const h = Math.floor(seconds / 3600);
@@ -66,8 +106,8 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ questions, answers, onAn
     return (
         <div className="flex flex-col md:flex-row gap-6 p-6 max-w-7xl mx-auto w-full min-h-screen pt-20 pb-20 md:pb-6">
             {/* Main Question Area */}
-            <div className="flex-1 flex flex-col gap-6">
-                <div className="glass-panel p-6 md:p-8 flex-1 flex flex-col justify-center relative">
+            <div className="flex-1 flex flex-col gap-6 order-2 md:order-1">
+                <div className="glass-panel p-6 md:p-8 flex-1 flex flex-col relative">
                     {/* Header: Meta Info & Timer */}
                     <div className="flex flex-col-reverse md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-gray-700/50 pb-4">
                         <div className="flex flex-col gap-1">
@@ -146,49 +186,82 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ questions, answers, onAn
             </div>
 
             {/* Navigation Map (Sidebar) */}
-            <div className="hidden md:flex flex-col gap-6 w-80 glass-panel p-6 h-full overflow-y-auto">
-                <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                    <Circle size={12} className="fill-blue-500 text-blue-500" /> Question Map
-                </h3>
-                <div className="grid grid-cols-5 gap-2">
-                    {questions.map((q, idx) => {
-                        const isAnswered = answers[q.id] !== undefined;
-                        const isCurrent = currentIdx === idx;
-                        return (
-                            <button
-                                key={q.id}
-                                onClick={() => setCurrentIdx(idx)}
-                                className={`aspect-square rounded-lg text-sm font-bold border transition-all ${isCurrent
-                                    ? 'border-blue-400 bg-blue-500/20 text-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
-                                    : isAnswered
-                                        ? 'bg-green-500/20 border-green-500 text-green-400'
-                                        : 'bg-gray-600/40 border-gray-700 text-gray-500 hover:border-gray-500'
-                                    }`}
-                            >
-                                {idx + 1}
-                            </button>
-                        );
-                    })}
-                </div>
-                <div className="mt-2 flex flex-col gap-2 text-xs text-gray-400">
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 border border-blue-400 bg-blue-500/20 rounded"></div> Saat Ini
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-green-500/20 border-green-500 rounded"></div> Terjawab
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-gray-800 border-gray-700 rounded"></div> Belum Terjawab
-                    </div>
+            <div className="flex flex-col gap-6 w-full md:w-80 order-1 md:order-2">
+                {/* New Empty Card */}
+                <div className="glass-panel p-2 h-57 md:h-45 flex items-center justify-center">
+                    <CameraMonitor onViolation={(msg) => setViolation(msg)} />
                 </div>
 
-                <button
-                    onClick={onFinish}
-                    className="mt-auto w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg flex items-center justify-center gap-2 transition-all"
-                >
-                    <CheckCircle size={18} /> Review & Submit
-                </button>
+                <div className="hidden md:flex flex-1 glass-panel p-6 overflow-y-auto flex flex-col">
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                        <Circle size={12} className="fill-blue-500 text-blue-500" /> Question Map
+                    </h3>
+                    <div className="grid grid-cols-5 gap-2">
+                        {questions.map((q, idx) => {
+                            const isAnswered = answers[q.id] !== undefined;
+                            const isCurrent = currentIdx === idx;
+                            return (
+                                <button
+                                    key={q.id}
+                                    onClick={() => setCurrentIdx(idx)}
+                                    className={`aspect-square rounded-lg text-sm font-bold border transition-all ${isCurrent
+                                        ? 'border-blue-400 bg-blue-500/20 text-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
+                                        : isAnswered
+                                            ? 'bg-green-500/20 border-green-500 text-green-400'
+                                            : 'bg-gray-600/40 border-gray-700 text-gray-500 hover:border-gray-500'
+                                        }`}
+                                >
+                                    {idx + 1}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <div className="mt-4 mb-4 flex flex-col gap-2 text-xs text-gray-400">
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 border border-blue-400 bg-blue-500/20 rounded"></div> Saat Ini
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-green-500/20 border-green-500 rounded"></div> Terjawab
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-gray-800 border-gray-700 rounded"></div> Belum Terjawab
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={onFinish}
+                        className="mt-auto w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg flex items-center justify-center gap-2 transition-all"
+                    >
+                        <CheckCircle size={18} /> Review & Submit
+                    </button>
+                </div>
             </div>
+
+            {/* Warning Modal (1st Strike) */}
+            {warning && !violation && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-300">
+                    <div className="glass-panel p-8 max-w-md w-full text-center border-yellow-500/50 shadow-[0_0_50px_rgba(234,179,8,0.1)]">
+                        <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-yellow-500">
+                            <AlertCircle size={32} className="text-yellow-500" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-white mb-2">Peringatan Keamanan</h3>
+                        <p className="text-gray-300 mb-6 leading-relaxed">
+                            {warning}
+                            <br />
+                            <span className="text-yellow-400 font-bold">Ini adalah peringatan terakhir.</span> Jika terdeteksi sekali lagi, kuis akan otomatis dikumpulkan.
+                        </p>
+                        
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="text-yellow-500 font-mono font-bold text-xl">
+                                {modalTimer}s
+                            </div>
+                            <div className="text-xs text-gray-400 uppercase tracking-widest">
+                                Melanjutkan Otomatis...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Violation Modal */}
             {violation && (
@@ -200,17 +273,20 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({ questions, answers, onAn
                             </svg>
                         </div>
                         <h3 className="text-2xl font-bold text-white mb-2">Pelanggaran Terdeteksi!</h3>
-                        <p className="text-gray-300 mb-8 leading-relaxed">
+                        <p className="text-gray-300 mb-6 leading-relaxed">
                             {violation}
                             <br />
                             Quiz akan otomatis dikumpulkan.
                         </p>
-                        <button
-                            onClick={onAutoSubmit}
-                            className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg active:scale-95"
-                        >
-                            Mengerti & Kumpulkan
-                        </button>
+
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="text-red-500 font-mono font-bold text-xl">
+                                {modalTimer}s
+                            </div>
+                            <div className="text-xs text-gray-400 uppercase tracking-widest">
+                                Mengumpulkan Otomatis...
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
