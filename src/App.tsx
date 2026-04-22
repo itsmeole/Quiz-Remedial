@@ -36,9 +36,9 @@ function App() {
   const [resultId, setResultId] = useState<string | null>(null);
   const [isPassed, setIsPassed] = useState(false);
 
-  // Weight config (from .env, defaults 70/30)
-  const pgWeight = parseInt(import.meta.env.VITE_PG_WEIGHT || '70') / 100;
-  const essayWeight = parseInt(import.meta.env.VITE_ESSAY_WEIGHT || '30') / 100;
+  // Weight config (hardcoded 70/30)
+  const pgWeight = 70 / 100;
+  const essayWeight = 30 / 100;
 
   // Route detection on load
   useEffect(() => {
