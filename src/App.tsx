@@ -5,11 +5,11 @@ import { QuizScreen } from './components/QuizScreen';
 import { ReviewScreen } from './components/ReviewScreen';
 import { ResultScreen } from './components/ResultScreen';
 import { AdminScreen } from './components/AdminScreen';
-import type { UserData, GameState, Question } from './types';
-// import { linearAlgebraQuestions, calculusQuestions } from './data/questions'; // REMOVED
+import type { UserData, GameState, Question, EssayScoreResult } from './types';
 import { quizService } from './services/quizService';
+import { groqService } from './services/groqService';
 import { supabase } from './utils/supabaseClient';
-import bgImage from './assets/bg.png'; // FORCE IMPORT
+import bgImage from './assets/bg.png';
 
 const MAX_STRIKES = 5;
 
@@ -17,26 +17,72 @@ function App() {
   const [gameState, setGameState] = useState<GameState>('WELCOME');
   const [userData, setUserData] = useState<UserData | null>(null);
   const [answers, setAnswers] = useState<Record<number, number>>({});
-  const [score, setScore] = useState(0);
+  const [essayAnswers, setEssayAnswers] = useState<Record<number, string>>({});
+  const [essayCorrectAnswers, setEssayCorrectAnswers] = useState<Record<number, string>>({});
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
   const [blockedReason, setBlockedReason] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(3600); // 1 hour in seconds, global state
+  const [timeLeft, setTimeLeft] = useState(3600);
 
+  // Result states
+  const [finalScore, setFinalScore] = useState(0);
+  const [pgScore, setPgScore] = useState(0);
+  const [essayScore, setEssayScore] = useState(0);
+  const [pgCorrectCount, setPgCorrectCount] = useState(0);
+  const [pgTotalQuestions, setPgTotalQuestions] = useState(0);
+  const [essayScoreDetails, setEssayScoreDetails] = useState<EssayScoreResult[]>([]);
+  const [pgAnswersDetail, setPgAnswersDetail] = useState<Array<{ question_id: number; question_text: string; is_correct: boolean }>>([]);
+  const [aiSuggestion, setAiSuggestion] = useState<string[]>([]);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const [resultId, setResultId] = useState<string | null>(null);
+  const [isPassed, setIsPassed] = useState(false);
 
+  // Weight config (from .env, defaults 70/30)
+  const pgWeight = parseInt(import.meta.env.VITE_PG_WEIGHT || '70') / 100;
+  const essayWeight = parseInt(import.meta.env.VITE_ESSAY_WEIGHT || '30') / 100;
 
-  // Hidden Admin Route Check
+  // Route detection on load
   useEffect(() => {
-    if (window.location.pathname === '/data') {
+    const path = window.location.pathname;
+
+    if (path === '/data') {
       setGameState('ADMIN');
+      return;
+    }
+
+    const resultMatch = path.match(/^\/result\/([0-9a-f-]{36})$/i);
+    if (resultMatch) {
+      const id = resultMatch[1];
+      quizService.getResultById(id).then((result) => {
+        if (result) {
+          setFinalScore(result.score);
+          setPgScore(result.pg_score ?? result.score);
+          setEssayScore(result.essay_score ?? 0);
+          setPgCorrectCount(result.pg_correct_count ?? result.correct_count ?? 0);
+          setPgTotalQuestions(result.pg_total_questions ?? result.total_questions ?? 0);
+          setPgAnswersDetail((result.pg_answers_detail as any) ?? []);
+          setAiSuggestion(result.ai_suggestion ? JSON.parse(result.ai_suggestion) : []);
+          setResultId(id);
+          setIsPassed(result.passed);
+          setUserData({
+            name: result.name,
+            nim: result.nim,
+            class: result.class,
+            subject: result.subject as 'linear-algebra' | 'calculus',
+          });
+          setGameState('RESULT');
+        } else {
+          // Result not found — go to welcome
+          window.history.replaceState({}, '', '/');
+        }
+      });
     }
   }, []);
 
   const handleStart = async (data: UserData) => {
     setBlockedReason(null);
-    setTimeLeft(3600); // Reset timer on start
+    setTimeLeft(3600);
 
     if (supabase) {
-      // 1. Check if ALREADY PASSED
       const { data: passedData } = await supabase
         .from('quiz_results')
         .select('*')
@@ -45,11 +91,16 @@ function App() {
         .limit(1);
 
       if (passedData && passedData.length > 0) {
-        setBlockedReason("Anda sudah lulus remedial ini sebelumnya. Tidak perlu mengerjakan lagi.");
+        // Offer to view their result
+        const existingResult = passedData[0];
+        if (existingResult.id) {
+          setBlockedReason(`Anda sudah lulus remedial ini sebelumnya. Tidak perlu mengerjakan lagi. Klik tutup dan akses nilai Anda di: ${window.location.origin}/result/${existingResult.id}`);
+        } else {
+          setBlockedReason('Anda sudah lulus remedial ini sebelumnya. Tidak perlu mengerjakan lagi.');
+        }
         return;
       }
 
-      // 2. Check for previous failures (3 Strikes Rule)
       const { count, error } = await supabase
         .from('quiz_results')
         .select('*', { count: 'exact', head: true })
@@ -57,35 +108,38 @@ function App() {
         .eq('passed', false);
 
       if (error) {
-        console.error("Error checking attempts:", error);
-        setBlockedReason("Terjadi kesalahan saat memeriksa data. Silakan coba lagi.");
+        setBlockedReason('Terjadi kesalahan saat memeriksa data. Silakan coba lagi.');
         return;
       }
 
       if (count !== null && count >= MAX_STRIKES) {
-        setBlockedReason("Anda telah mencapai jumlah maksimum percobaan. Silahkan hubungi dosen pengampu atau asisten dosen untuk membuka akses.");
+        setBlockedReason('Anda telah mencapai jumlah maksimum percobaan. Silahkan hubungi dosen pengampu atau asisten dosen untuk membuka akses.');
         return;
       }
     }
 
-    // Fetch Questions from Supabase (Secure)
     const questions = await quizService.getQuestions(data.subject);
-
     if (!questions || questions.length === 0) {
-      setBlockedReason("Gagal memuat soal. Periksa koneksi internet atau hubungi admin.");
+      setBlockedReason('Gagal memuat soal. Periksa koneksi internet atau hubungi admin.');
       return;
     }
 
-    // Shuffle Questions
-    const shuffled = [...questions].sort(() => Math.random() - 0.5);
-    setShuffledQuestions(shuffled);
+    // Fetch essay correct answers (untuk referensi AI scoring)
+    const essayRefAnswers = await quizService.getEssayCorrectAnswers(data.subject);
 
-    // Mark session as active and save UserData for auto-recovery
+    // Shuffle: PG questions shuffled, essay appended at end
+    const pgQuestions = questions.filter(q => q.type === 'multiple-choice').sort(() => Math.random() - 0.5);
+    const essayQuestions = questions.filter(q => q.type === 'essay');
+    setShuffledQuestions([...pgQuestions, ...essayQuestions]);
+    setEssayCorrectAnswers(essayRefAnswers);
+
     localStorage.setItem('quiz_active', 'true');
     localStorage.setItem('quiz_userData', JSON.stringify(data));
     localStorage.setItem('quiz_answers', '{}');
 
     setUserData(data);
+    setAnswers({});
+    setEssayAnswers({});
     setGameState('QUIZ');
   };
 
@@ -93,35 +147,102 @@ function App() {
     setAnswers(prev => ({ ...prev, [questionId]: answerIndex }));
   };
 
-  const handleQuizFinish = () => {
-    setGameState('REVIEW');
+  const handleEssayAnswer = (questionId: number, text: string) => {
+    setEssayAnswers(prev => ({ ...prev, [questionId]: text }));
   };
 
-  const handleReviewBack = () => {
-    setGameState('QUIZ');
-  };
+  const handleQuizFinish = () => setGameState('REVIEW');
+  const handleReviewBack = () => setGameState('QUIZ');
 
   const handleSubmit = async () => {
     if (!userData) return;
 
     try {
-      // Secure Server-Side Grading
-      const result = await quizService.submitQuiz(userData, answers);
+      const essayQuestions = shuffledQuestions
+        .filter(q => q.type === 'essay')
+        .map(q => ({ id: q.id, text: q.text }));
+
+      // Step 1: Score essays with Groq (if any)
+      let essayScoreVal = 0;
+      let essayDetails: EssayScoreResult[] = [];
+
+      if (essayQuestions.length > 0) {
+        try {
+          essayDetails = await groqService.scoreEssayAnswers(
+            essayQuestions,
+            essayAnswers,
+            essayCorrectAnswers   // jawaban referensi dosen
+          );
+          if (essayDetails.length > 0) {
+            essayScoreVal = essayDetails.reduce((sum, r) => sum + r.score, 0) / essayDetails.length;
+          }
+        } catch (e) {
+          console.error('Essay scoring failed, continuing with 0:', e);
+        }
+      }
+
+      // Step 2: Submit to Supabase (server-side PG grading)
+      const result = await quizService.submitQuiz(
+        userData,
+        answers,
+        essayAnswers,
+        essayScoreVal,
+        pgWeight,
+        essayWeight
+      );
 
       if (result) {
-        setScore(result.correct_count);
+        setFinalScore(result.score);
+        setPgScore(result.pg_score);
+        setEssayScore(essayScoreVal);
+        setPgCorrectCount(result.correct_count);
+        setPgTotalQuestions(result.total_questions);
+        setEssayScoreDetails(essayDetails);
+        setPgAnswersDetail(result.pg_answers_detail ?? []);
+        setResultId(result.id);
+        setIsPassed(result.passed);
+        window.history.pushState({}, '', `/result/${result.id}`);
+      }
+
+      // Clear session
+      localStorage.removeItem('quiz_active');
+      localStorage.removeItem('quiz_userData');
+      localStorage.removeItem('quiz_answers');
+
+      // Step 3: Show result immediately
+      setGameState('RESULT');
+
+      // Step 4: Generate AI suggestion in background
+      if (result) {
+        setIsLoadingAI(true);
+        groqService
+          .generateSuggestion(
+            result.pg_score,
+            essayScoreVal,
+            result.score,
+            userData.subject,
+            result.passed,
+            result.pg_answers_detail ?? [],
+            essayDetails.flatMap(d => d.study_suggestions ?? [])
+          )
+          .then(async (suggestions) => {
+            setAiSuggestion(suggestions);
+            setIsLoadingAI(false);
+            await quizService.updateAiSuggestion(result.id, JSON.stringify(suggestions));
+          })
+          .catch((e) => {
+            console.error('AI suggestion failed:', e);
+            setIsLoadingAI(false);
+          });
       }
     } catch (err) {
-      console.error("Failed to submit:", err);
-      // alert("Gagal menyimpan jawaban. Coba lagi."); // Optional: alert might be annoying if auto-submit
-      // But let's keep it for now or just log.
+      console.error('Failed to submit:', err);
       if (err instanceof Error && err.message !== 'Auto-submit') {
-        alert("Gagal menyimpan jawaban. Coba lagi.");
+        alert('Gagal menyimpan jawaban. Coba lagi.');
         return;
       }
+      setGameState('RESULT');
     }
-
-    setGameState('RESULT');
   };
 
   // Timer Logic (Global)
@@ -130,7 +251,7 @@ function App() {
       const timer = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
-            handleSubmit(); // Auto submit when time runs out
+            handleSubmit();
             return 0;
           }
           return prev - 1;
@@ -143,16 +264,23 @@ function App() {
   const handleRetry = () => {
     setGameState('WELCOME');
     setAnswers({});
-    setScore(0);
+    setEssayAnswers({});
+    setEssayCorrectAnswers({});
+    setPgAnswersDetail([]);
+    setAiSuggestion([]);
+    setFinalScore(0);
+    setPgScore(0);
+    setEssayScore(0);
+    setEssayScoreDetails([]);
+    setResultId(null);
+    setIsPassed(false);
     setUserData(null);
     setShuffledQuestions([]);
-    setTimeLeft(3600); // Reset timer on retry
-
-    // Clear all session flags
-    localStorage.removeItem('blocked_reason');
+    setTimeLeft(3600);
     localStorage.removeItem('quiz_active');
     localStorage.removeItem('quiz_userData');
     localStorage.removeItem('quiz_answers');
+    window.history.replaceState({}, '', '/');
   };
 
   return (
@@ -163,7 +291,7 @@ function App() {
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundAttachment: 'fixed',
-        backgroundRepeat: 'no-repeat'
+        backgroundRepeat: 'no-repeat',
       }}
     >
       {gameState === 'WELCOME' && <WelcomeScreen onStart={handleStart} />}
@@ -172,10 +300,12 @@ function App() {
         <QuizScreen
           questions={shuffledQuestions}
           answers={answers}
+          essayAnswers={essayAnswers}
           onAnswer={handleAnswer}
+          onEssayAnswer={handleEssayAnswer}
           onFinish={handleQuizFinish}
           onAutoSubmit={handleSubmit}
-          timeLeft={timeLeft} // Pass global timer
+          timeLeft={timeLeft}
         />
       )}
 
@@ -183,6 +313,7 @@ function App() {
         <ReviewScreen
           questions={shuffledQuestions}
           answers={answers}
+          essayAnswers={essayAnswers}
           onBack={handleReviewBack}
           onSubmit={handleSubmit}
         />
@@ -190,10 +321,22 @@ function App() {
 
       {gameState === 'RESULT' && userData && (
         <ResultScreen
-          score={score}
-          totalQuestions={shuffledQuestions.length}
+          finalScore={finalScore}
+          pgScore={pgScore}
+          essayScore={essayScore}
+          pgCorrectCount={pgCorrectCount}
+          pgTotalQuestions={pgTotalQuestions}
+          essayTotalQuestions={shuffledQuestions.filter(q => q.type === 'essay').length}
+          essayScoreDetails={essayScoreDetails}
+          pgAnswersDetail={pgAnswersDetail}
+          isPassed={isPassed}
           userData={userData}
           onRetry={handleRetry}
+          aiSuggestion={aiSuggestion}
+          isLoadingAI={isLoadingAI}
+          resultId={resultId}
+          pgWeight={pgWeight}
+          essayWeight={essayWeight}
         />
       )}
 
@@ -209,9 +352,7 @@ function App() {
               </svg>
             </div>
             <h3 className="text-2xl font-bold text-white mb-2">Akses Diblokir</h3>
-            <p className="text-gray-300 mb-8 leading-relaxed">
-              {blockedReason}
-            </p>
+            <p className="text-gray-300 mb-8 leading-relaxed whitespace-pre-wrap">{blockedReason}</p>
             <button
               onClick={() => setBlockedReason(null)}
               className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg active:scale-95"
