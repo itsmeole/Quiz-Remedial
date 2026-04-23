@@ -36,6 +36,7 @@ function App() {
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [resultId, setResultId] = useState<string | null>(null);
   const [isPassed, setIsPassed] = useState(false);
+  const [createdAt, setCreatedAt] = useState<string>('');
 
   // Weight config (hardcoded 70/30)
   const pgWeight = 70 / 100;
@@ -79,6 +80,7 @@ function App() {
           setEssayTotalQuestions(essayTotal);
           setResultId(id);
           setIsPassed(result.passed);
+          setCreatedAt(result.created_at);
           setUserData({
             name: result.name,
             nim: result.nim,
@@ -218,6 +220,7 @@ function App() {
         setPgAnswersDetail(result.pg_answers_detail ?? []);
         setResultId(result.id);
         setIsPassed(result.passed);
+        setCreatedAt(new Date().toISOString());
         window.history.pushState({}, '', `/result/${result.id}`);
       }
 
@@ -289,6 +292,7 @@ function App() {
     setPgAnswersDetail([]);
     setAiSuggestion([]);
     setEssayTotalQuestions(0);
+    setCreatedAt('');
     setFinalScore(0);
     setPgScore(0);
     setEssayScore(0);
@@ -352,6 +356,7 @@ function App() {
           pgAnswersDetail={pgAnswersDetail}
           essayAnswers={essayAnswers}
           isPassed={isPassed}
+          createdAt={createdAt}
           userData={userData}
           onRetry={handleRetry}
           aiSuggestion={aiSuggestion}

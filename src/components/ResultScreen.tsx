@@ -24,6 +24,7 @@ interface ResultScreenProps {
     pgAnswersDetail: PgAnswerDetail[];
     essayAnswers: Record<number, string>;
     isPassed: boolean;
+    createdAt: string;
     userData: UserData;
     onRetry: () => void;
     aiSuggestion: string[];
@@ -35,7 +36,7 @@ interface ResultScreenProps {
 
 export const ResultScreen: React.FC<ResultScreenProps> = ({
     finalScore, pgScore, essayScore, pgCorrectCount, pgTotalQuestions,
-    essayTotalQuestions, essayScoreDetails, pgAnswersDetail, essayAnswers, isPassed, userData, onRetry,
+    essayTotalQuestions, essayScoreDetails, pgAnswersDetail, essayAnswers, isPassed, createdAt, userData, onRetry,
     aiSuggestion, isLoadingAI, resultId, pgWeight, essayWeight
 }) => {
     const [canRetry, setCanRetry] = useState(false);
@@ -51,15 +52,27 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
 
     useEffect(() => {
         if (!isPassed) {
-            const interval = setInterval(() => {
-                setTimeLeft(prev => {
-                    if (prev <= 1) { setCanRetry(true); clearInterval(interval); return 0; }
-                    return prev - 1;
-                });
-            }, 1000);
-            return () => clearInterval(interval);
+            const createdTime = createdAt ? new Date(createdAt).getTime() : Date.now();
+            const targetTime = createdTime + 300 * 1000;
+
+            const updateTimer = () => {
+                const remaining = Math.max(0, Math.ceil((targetTime - Date.now()) / 1000));
+                setTimeLeft(remaining);
+                if (remaining <= 0) {
+                    setCanRetry(true);
+                    return true; // done
+                }
+                return false;
+            };
+
+            if (!updateTimer()) {
+                const interval = setInterval(() => {
+                    if (updateTimer()) clearInterval(interval);
+                }, 1000);
+                return () => clearInterval(interval);
+            }
         }
-    }, [isPassed]);
+    }, [isPassed, createdAt]);
 
     const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
     const handleDownload = async () => { await generateCertificate(userData.name, userData.subject); };
