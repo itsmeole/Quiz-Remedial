@@ -29,6 +29,7 @@ function App() {
   const [essayScore, setEssayScore] = useState(0);
   const [pgCorrectCount, setPgCorrectCount] = useState(0);
   const [pgTotalQuestions, setPgTotalQuestions] = useState(0);
+  const [essayTotalQuestions, setEssayTotalQuestions] = useState(0);
   const [essayScoreDetails, setEssayScoreDetails] = useState<EssayScoreResult[]>([]);
   const [pgAnswersDetail, setPgAnswersDetail] = useState<Array<{ question_id: number; question_text: string; is_correct: boolean }>>([]);
   const [aiSuggestion, setAiSuggestion] = useState<string[]>([]);
@@ -60,7 +61,22 @@ function App() {
           setPgCorrectCount(result.pg_correct_count ?? result.correct_count ?? 0);
           setPgTotalQuestions(result.pg_total_questions ?? result.total_questions ?? 0);
           setPgAnswersDetail((result.pg_answers_detail as any) ?? []);
-          setAiSuggestion(result.ai_suggestion ? JSON.parse(result.ai_suggestion) : []);
+          
+          const parsedAi = result.ai_suggestion ? JSON.parse(result.ai_suggestion) : null;
+          if (Array.isArray(parsedAi)) {
+            setAiSuggestion(parsedAi);
+          } else if (parsedAi && parsedAi.suggestions) {
+            setAiSuggestion(parsedAi.suggestions);
+            setEssayScoreDetails(parsedAi.essayDetails || []);
+          } else {
+            setAiSuggestion([]);
+          }
+
+          setEssayAnswers((result.essay_answers as Record<number, string>) ?? {});
+          const essayTotal = result.pg_total_questions != null
+            ? (result.total_questions ?? 0) - result.pg_total_questions 
+            : Object.keys((result.essay_answers as Record<number, string>) ?? {}).length;
+          setEssayTotalQuestions(essayTotal);
           setResultId(id);
           setIsPassed(result.passed);
           setUserData({
@@ -197,6 +213,7 @@ function App() {
         setEssayScore(essayScoreVal);
         setPgCorrectCount(result.correct_count);
         setPgTotalQuestions(result.total_questions);
+        setEssayTotalQuestions(essayQuestions.length);
         setEssayScoreDetails(essayDetails);
         setPgAnswersDetail(result.pg_answers_detail ?? []);
         setResultId(result.id);
@@ -228,7 +245,10 @@ function App() {
           .then(async (suggestions) => {
             setAiSuggestion(suggestions);
             setIsLoadingAI(false);
-            await quizService.updateAiSuggestion(result.id, JSON.stringify(suggestions));
+            await quizService.updateAiSuggestion(result.id, JSON.stringify({
+              suggestions: suggestions,
+              essayDetails: essayDetails
+            }));
           })
           .catch((e) => {
             console.error('AI suggestion failed:', e);
@@ -268,6 +288,7 @@ function App() {
     setEssayCorrectAnswers({});
     setPgAnswersDetail([]);
     setAiSuggestion([]);
+    setEssayTotalQuestions(0);
     setFinalScore(0);
     setPgScore(0);
     setEssayScore(0);
@@ -326,9 +347,10 @@ function App() {
           essayScore={essayScore}
           pgCorrectCount={pgCorrectCount}
           pgTotalQuestions={pgTotalQuestions}
-          essayTotalQuestions={shuffledQuestions.filter(q => q.type === 'essay').length}
+          essayTotalQuestions={essayTotalQuestions}
           essayScoreDetails={essayScoreDetails}
           pgAnswersDetail={pgAnswersDetail}
+          essayAnswers={essayAnswers}
           isPassed={isPassed}
           userData={userData}
           onRetry={handleRetry}

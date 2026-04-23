@@ -22,6 +22,7 @@ interface ResultScreenProps {
     essayTotalQuestions: number;
     essayScoreDetails: EssayScoreResult[];
     pgAnswersDetail: PgAnswerDetail[];
+    essayAnswers: Record<number, string>;
     isPassed: boolean;
     userData: UserData;
     onRetry: () => void;
@@ -34,7 +35,7 @@ interface ResultScreenProps {
 
 export const ResultScreen: React.FC<ResultScreenProps> = ({
     finalScore, pgScore, essayScore, pgCorrectCount, pgTotalQuestions,
-    essayTotalQuestions, essayScoreDetails, pgAnswersDetail, isPassed, userData, onRetry,
+    essayTotalQuestions, essayScoreDetails, pgAnswersDetail, essayAnswers, isPassed, userData, onRetry,
     aiSuggestion, isLoadingAI, resultId, pgWeight, essayWeight
 }) => {
     const [canRetry, setCanRetry] = useState(false);
@@ -44,7 +45,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
     const [showEssayDetails, setShowEssayDetails] = useState(false);
     const [showPgReview, setShowPgReview] = useState(false);
 
-    const hasEssay = essayTotalQuestions > 0;
+    const hasEssay = essayTotalQuestions > 0 || essayScoreDetails.length > 0 || Object.keys(essayAnswers).length > 0 || essayScore > 0;
     const hasPgDetail = pgAnswersDetail.length > 0;
     const resultUrl = resultId ? `${window.location.origin}/result/${resultId}` : null;
 
@@ -283,6 +284,11 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
                                         <div className="h-1.5 bg-gray-700 rounded-full mb-4 overflow-hidden">
                                             <div className={`h-full rounded-full transition-all duration-700 ${d.score >= 75 ? 'bg-green-400' : d.score >= 50 ? 'bg-yellow-400' : 'bg-red-400'}`}
                                                 style={{ width: `${d.score}%` }} />
+                                        </div>
+                                        {/* Jawaban User */}
+                                        <div className="mb-4 bg-gray-900/50 p-3 rounded-lg border border-gray-700/50">
+                                            <div className="text-xs font-semibold text-gray-400 mb-1">Jawaban Anda:</div>
+                                            <p className="text-sm text-gray-300 whitespace-pre-wrap">{essayAnswers[d.questionId] || '(Tidak dijawab)'}</p>
                                         </div>
                                         {/* Feedback */}
                                         {d.feedback && (
