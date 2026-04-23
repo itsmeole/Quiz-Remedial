@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, CheckCircle, Circle, Clock, AlertCircle, FileText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, Circle, Clock, AlertCircle, FileText, Pencil } from 'lucide-react';
 import type { Question } from '../types';
 import { CameraMonitor } from './CameraMonitor';
 
@@ -197,15 +197,17 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({
                                     key={q.id}
                                     onClick={() => setCurrentIdx(idx)}
                                     title={isEssayQ ? `Essay ${idx + 1}` : `PG ${idx + 1}`}
-                                    className={`aspect-square rounded-lg text-xs font-bold border transition-all ${isCurrent
+                                    className={`aspect-square flex items-center justify-center rounded-lg text-xs font-bold border transition-all ${isCurrent
                                         ? 'border-blue-400 bg-blue-500/20 text-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
                                         : isAnswered
-                                            ? 'bg-green-500/20 border-green-500 text-green-400'
+                                            ? isEssayQ
+                                                ? 'bg-purple-600/20 border-purple-500 text-purple-400'
+                                                : 'bg-green-500/20 border-green-500 text-green-400'
                                             : isEssayQ
-                                                ? 'bg-purple-600/20 border-purple-500/50 text-purple-400 hover:border-purple-400'
+                                                ? 'bg-transparent border-purple-500/50 text-purple-400 hover:border-purple-400 hover:bg-purple-500/10'
                                                 : 'bg-gray-600/40 border-gray-700 text-gray-500 hover:border-gray-500'}`}
                                 >
-                                    {isEssayQ ? 'E' : idx + 1}
+                                    {isEssayQ ? <Pencil size={14} fill={isAnswered ? 'currentColor' : 'none'} /> : idx + 1}
                                 </button>
                             );
                         })}
@@ -213,7 +215,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({
                     <div className="mt-4 mb-4 flex flex-col gap-2 text-xs text-gray-400">
                         <div className="flex items-center gap-2"><div className="w-3 h-3 border border-blue-400 bg-blue-500/20 rounded" /> Saat Ini</div>
                         <div className="flex items-center gap-2"><div className="w-3 h-3 bg-green-500/20 border-green-500 rounded" /> Terjawab</div>
-                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-purple-600/20 border-purple-500/50 rounded" /> Essay</div>
+                        <div className="flex items-center gap-2"><div className="w-3 h-3 bg-transparent border border-purple-500/50 rounded" /> Essay</div>
                         <div className="flex items-center gap-2"><div className="w-3 h-3 bg-gray-800 border-gray-700 rounded" /> Belum Terjawab</div>
                     </div>
                     <button
