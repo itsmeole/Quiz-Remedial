@@ -3,7 +3,7 @@ import type { Question, UserData, QuizResult, SubmitResult } from '../types';
 
 export const quizService = {
     // Fetch questions WITHOUT correct_index (keamanan: correct_index disembunyikan)
-    async getQuestions(subject: 'linear-algebra' | 'calculus'): Promise<Question[] | null> {
+    async getQuestions(subject: string): Promise<Question[] | null> {
         if (!supabase) return null;
 
         const { data, error } = await supabase
@@ -20,7 +20,7 @@ export const quizService = {
     },
 
     // Fetch correct_answer for essay questions only (for AI scoring reference)
-    async getEssayCorrectAnswers(subject: 'linear-algebra' | 'calculus'): Promise<Record<number, string>> {
+    async getEssayCorrectAnswers(subject: string): Promise<Record<number, string>> {
         if (!supabase) return {};
 
         const { data, error } = await supabase
@@ -77,10 +77,10 @@ export const quizService = {
     async updateAiSuggestion(resultId: string, suggestion: string): Promise<void> {
         if (!supabase) return;
 
-        const { error } = await supabase
-            .from('quiz_results')
-            .update({ ai_suggestion: suggestion })
-            .eq('id', resultId);
+        const { error } = await supabase.rpc('update_ai_suggestion', {
+            p_id: resultId,
+            p_suggestion: suggestion
+        });
 
         if (error) {
             console.error('Error saving AI suggestion:', error);

@@ -12,6 +12,7 @@ import { supabase } from './utils/supabaseClient';
 import bgImage from './assets/bg.png';
 
 const MAX_STRIKES = 5;
+const QUIZ_DURATION_SECONDS = 300; // Set to 60 minutes
 
 function App() {
   const [gameState, setGameState] = useState<GameState>('WELCOME');
@@ -21,7 +22,7 @@ function App() {
   const [essayCorrectAnswers, setEssayCorrectAnswers] = useState<Record<number, string>>({});
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
   const [blockedReason, setBlockedReason] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState(3600);
+  const [timeLeft, setTimeLeft] = useState(QUIZ_DURATION_SECONDS);
 
   // Result states
   const [finalScore, setFinalScore] = useState(0);
@@ -46,7 +47,7 @@ function App() {
   useEffect(() => {
     const path = window.location.pathname;
 
-    if (path === '/data') {
+    if (path === '/admin') {
       setGameState('ADMIN');
       return;
     }
@@ -54,15 +55,19 @@ function App() {
     const resultMatch = path.match(/^\/result\/([0-9a-f-]{36})$/i);
     if (resultMatch) {
       const id = resultMatch[1];
-      quizService.getResultById(id).then((result) => {
+      quizService.getResultById(id).then(async (result) => {
         if (result) {
+          // Fetch questions to show essay questions in ResultScreen
+          const qs = await quizService.getQuestions(result.subject);
+          setShuffledQuestions(qs || []);
+
           setFinalScore(result.score);
           setPgScore(result.pg_score ?? result.score);
           setEssayScore(result.essay_score ?? 0);
           setPgCorrectCount(result.pg_correct_count ?? result.correct_count ?? 0);
           setPgTotalQuestions(result.pg_total_questions ?? result.total_questions ?? 0);
           setPgAnswersDetail((result.pg_answers_detail as any) ?? []);
-          
+
           const parsedAi = result.ai_suggestion ? JSON.parse(result.ai_suggestion) : null;
           if (Array.isArray(parsedAi)) {
             setAiSuggestion(parsedAi);
@@ -75,7 +80,7 @@ function App() {
 
           setEssayAnswers((result.essay_answers as Record<number, string>) ?? {});
           const essayTotal = result.pg_total_questions != null
-            ? (result.total_questions ?? 0) - result.pg_total_questions 
+            ? (result.total_questions ?? 0) - result.pg_total_questions
             : Object.keys((result.essay_answers as Record<number, string>) ?? {}).length;
           setEssayTotalQuestions(essayTotal);
           setResultId(id);
@@ -85,7 +90,7 @@ function App() {
             name: result.name,
             nim: result.nim,
             class: result.class,
-            subject: result.subject as 'linear-algebra' | 'calculus',
+            subject: result.subject,
           });
           setGameState('RESULT');
         } else {
@@ -98,7 +103,7 @@ function App() {
 
   const handleStart = async (data: UserData) => {
     setBlockedReason(null);
-    setTimeLeft(3600);
+    setTimeLeft(QUIZ_DURATION_SECONDS);
 
     if (supabase) {
       const { data: passedData } = await supabase
@@ -133,6 +138,27 @@ function App() {
       if (count !== null && count >= MAX_STRIKES) {
         setBlockedReason('Anda telah mencapai jumlah maksimum percobaan. Silahkan hubungi dosen pengampu atau asisten dosen untuk membuka akses.');
         return;
+      }
+
+      // Check cooldown (60 minutes) based on created_at of the last attempt
+      const { data: recentAttempts } = await supabase
+        .from('quiz_results')
+        .select('created_at')
+        .eq('nim', data.nim)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (recentAttempts && recentAttempts.length > 0) {
+        const lastAttemptTime = new Date(recentAttempts[0].created_at).getTime();
+        const currentTime = new Date().getTime();
+        const diffInSeconds = Math.floor((currentTime - lastAttemptTime) / 1000);
+
+        if (diffInSeconds < QUIZ_DURATION_SECONDS) {
+          const remainingSeconds = QUIZ_DURATION_SECONDS - diffInSeconds;
+          const remainingMinutes = Math.ceil(remainingSeconds / 60);
+          setBlockedReason(`Batas waktu jeda belum selesai. Anda baru saja mengambil kuis ini. Harap tunggu sekitar ${remainingMinutes} menit lagi sebelum dapat mencoba kembali.`);
+          return;
+        }
       }
     }
 
@@ -222,6 +248,13 @@ function App() {
         setIsPassed(result.passed);
         setCreatedAt(new Date().toISOString());
         window.history.pushState({}, '', `/result/${result.id}`);
+
+        // Segera simpan essayDetails ke database untuk mencegah hilang jika user merefresh halaman
+        // sebelum generateSuggestion keseluruhan (yang makan waktu) selesai.
+        await quizService.updateAiSuggestion(result.id, JSON.stringify({
+          suggestions: [],
+          essayDetails: essayDetails
+        }));
       }
 
       // Clear session
@@ -364,6 +397,7 @@ function App() {
           resultId={resultId}
           pgWeight={pgWeight}
           essayWeight={essayWeight}
+          questions={shuffledQuestions}
         />
       )}
 

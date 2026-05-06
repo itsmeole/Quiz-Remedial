@@ -5,7 +5,7 @@ import {
     CheckCircle2, XCircle as XCircleIcon, ListChecks
 } from 'lucide-react';
 import { generateCertificate } from '../utils/certificate';
-import type { UserData, EssayScoreResult } from '../types';
+import type { UserData, EssayScoreResult, Question } from '../types';
 
 interface PgAnswerDetail {
     question_id: number;
@@ -32,12 +32,13 @@ interface ResultScreenProps {
     resultId: string | null;
     pgWeight: number;
     essayWeight: number;
+    questions: Question[];
 }
 
 export const ResultScreen: React.FC<ResultScreenProps> = ({
     finalScore, pgScore, essayScore, pgCorrectCount, pgTotalQuestions,
     essayTotalQuestions, essayScoreDetails, pgAnswersDetail, essayAnswers, isPassed, createdAt, userData, onRetry,
-    aiSuggestion, isLoadingAI, resultId, pgWeight, essayWeight
+    aiSuggestion, isLoadingAI, resultId, pgWeight, essayWeight, questions
 }) => {
     const [canRetry, setCanRetry] = useState(false);
     const [timeLeft, setTimeLeft] = useState(300);
@@ -284,15 +285,23 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
 
                         {showEssayDetails && (
                             <div className="mt-4 pt-4 border-t border-gray-700/50 space-y-4">
-                                {essayScoreDetails.map((d, i) => (
-                                    <div key={d.questionId} className="bg-gray-800/50 rounded-xl p-5 border border-purple-500/20">
-                                        {/* Header */}
-                                        <div className="flex items-center justify-between mb-3">
-                                            <span className="text-sm font-semibold text-purple-300">Essay {i + 1}</span>
-                                            <span className={`text-sm font-bold px-3 py-1 rounded-lg ${d.score >= 75 ? 'bg-green-500/20 text-green-400' : d.score >= 50 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'}`}>
-                                                {d.score}/100
-                                            </span>
-                                        </div>
+                                {essayScoreDetails.map((d, i) => {
+                                    const q = questions.find(q => q.id === d.questionId);
+                                    const qText = q ? q.text : `Essay ${i + 1}`;
+                                    
+                                    return (
+                                        <div key={d.questionId} className="bg-gray-800/50 rounded-xl p-5 border border-purple-500/20">
+                                            {/* Header */}
+                                            <div className="flex items-center justify-between mb-3">
+                                                <span className="text-sm font-semibold text-purple-300">Essay {i + 1}</span>
+                                                <span className={`text-sm font-bold px-3 py-1 rounded-lg ${d.score >= 75 ? 'bg-green-500/20 text-green-400' : d.score >= 50 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'}`}>
+                                                    {d.score}/100
+                                                </span>
+                                            </div>
+                                            {/* Soal */}
+                                            <div className="mb-3">
+                                                <p className="text-sm text-gray-200 font-medium whitespace-pre-wrap">{qText}</p>
+                                            </div>
                                         {/* Score bar */}
                                         <div className="h-1.5 bg-gray-700 rounded-full mb-4 overflow-hidden">
                                             <div className={`h-full rounded-full transition-all duration-700 ${d.score >= 75 ? 'bg-green-400' : d.score >= 50 ? 'bg-yellow-400' : 'bg-red-400'}`}
@@ -322,8 +331,9 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
                                                 <p className="text-xs text-gray-400 leading-relaxed">{d.weaknesses || '-'}</p>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>

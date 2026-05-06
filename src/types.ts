@@ -6,13 +6,24 @@ export interface Question {
     type: QuestionType;
     options: string[];
     correctIndex?: number;
+    subject?: string;
+    correct_answer?: string;
+    created_at?: string;
+}
+
+export interface Subject {
+    id: number;
+    code: string;
+    name: string;
+    description?: string;
+    created_at?: string;
 }
 
 export interface UserData {
     name: string;
     nim: string;
     class: string;
-    subject: 'linear-algebra' | 'calculus';
+    subject: string;
 }
 
 export type GameState = 'WELCOME' | 'QUIZ' | 'REVIEW' | 'RESULT' | 'ADMIN';

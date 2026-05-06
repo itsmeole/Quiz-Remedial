@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { UserData, Student } from '../types';
+import type { UserData, Student, Subject } from '../types';
 import { BookOpen, User, CreditCard, Users, ChevronRight, Search, Loader2, AlertCircle } from 'lucide-react';
 import { studentService } from '../services/studentService';
+import { subjectService } from '../services/subjectService';
 
 interface WelcomeScreenProps {
     onStart: (data: UserData) => void;
@@ -11,7 +12,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
     const [name, setName] = useState('');
     const [nim, setNim] = useState('');
     const [kelas, setKelas] = useState('Pagi A');
-    const [subject, setSubject] = useState<'linear-algebra' | 'calculus'>('linear-algebra');
+    const [subject, setSubject] = useState<string>('');
+    const [subjectsList, setSubjectsList] = useState<Subject[]>([]);
+    const [loadingSubjects, setLoadingSubjects] = useState(true);
     
     // Autocomplete states
     const [suggestions, setSuggestions] = useState<Student[]>([]);
@@ -29,6 +32,20 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Fetch subjects on mount
+    useEffect(() => {
+        const fetchSubjects = async () => {
+            setLoadingSubjects(true);
+            const data = await subjectService.getSubjects();
+            setSubjectsList(data);
+            if (data.length > 0) {
+                setSubject(data[0].code);
+            }
+            setLoadingSubjects(false);
+        };
+        fetchSubjects();
     }, []);
 
     // Effect for searching students as user types name
@@ -75,6 +92,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
 
         if (!name || !nim || !kelas) {
             setError("Harap isi semua data diri.");
+            return;
+        }
+
+        if (!subject) {
+            setError("Harap pilih mata kuliah.");
             return;
         }
 
@@ -196,14 +218,27 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
                             <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
                                 <BookOpen size={16} /> Mata Kuliah
                             </label>
-                            <select
-                                value={subject}
-                                onChange={(e) => setSubject(e.target.value as 'linear-algebra' | 'calculus')}
-                                className="w-full bg-gray-900/20 border border-gray-500/50 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-white appearance-none"
-                            >
-                                <option value="linear-algebra">Aljabar Linear</option>
-                                <option value="calculus">Kalkulus</option>
-                            </select>
+                            {loadingSubjects ? (
+                                <div className="w-full bg-gray-900/20 border border-gray-500/50 rounded-lg px-4 py-3 text-gray-400">
+                                    Memuat mata kuliah...
+                                </div>
+                            ) : subjectsList.length === 0 ? (
+                                <div className="w-full bg-red-900/20 border border-red-500/50 rounded-lg px-4 py-3 text-red-400">
+                                    Belum ada mata kuliah yang tersedia.
+                                </div>
+                            ) : (
+                                <select
+                                    value={subject}
+                                    onChange={(e) => setSubject(e.target.value)}
+                                    className="w-full bg-gray-900/20 border border-gray-500/50 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-white appearance-none"
+                                >
+                                    {subjectsList.map((subj) => (
+                                        <option key={subj.code} value={subj.code} className="bg-gray-900 text-white">
+                                            {subj.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
                         </div>
 
                         <button
