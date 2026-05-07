@@ -12,7 +12,8 @@ import { supabase } from './utils/supabaseClient';
 import bgImage from './assets/bg.png';
 
 const MAX_STRIKES = 5;
-const QUIZ_DURATION_SECONDS = 300; // Set to 60 minutes
+const RESET_TIMER = 300;
+const QUIZ_DURATION_SECONDS = 3600; // Set to 60 minutes
 
 function App() {
   const [gameState, setGameState] = useState<GameState>('WELCOME');
@@ -334,7 +335,7 @@ function App() {
     setIsPassed(false);
     setUserData(null);
     setShuffledQuestions([]);
-    setTimeLeft(3600);
+    setTimeLeft(RESET_TIMER);
     localStorage.removeItem('quiz_active');
     localStorage.removeItem('quiz_userData');
     localStorage.removeItem('quiz_answers');
