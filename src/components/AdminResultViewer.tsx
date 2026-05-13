@@ -1,5 +1,6 @@
-import React from 'react';
-import type { QuizResult, EssayScoreResult } from '../types';
+import React, { useEffect, useState } from 'react';
+import type { QuizResult, EssayScoreResult, Question } from '../types';
+import { quizService } from '../services/quizService';
 import { X, Target, FileText, CheckCircle2, XCircle as XCircleIcon } from 'lucide-react';
 
 interface AdminResultViewerProps {
@@ -10,7 +11,8 @@ interface AdminResultViewerProps {
 export const AdminResultViewer: React.FC<AdminResultViewerProps> = ({ result, onClose }) => {
     const pgAnswers = result.pg_answers_detail || [];
     const essayAnswers = result.essay_answers || {};
-    
+    const [questions, setQuestions] = useState<Question[]>([]);
+
     let essayDetails: EssayScoreResult[] = [];
     if (result.ai_suggestion) {
         try {
@@ -22,6 +24,18 @@ export const AdminResultViewer: React.FC<AdminResultViewerProps> = ({ result, on
             console.error('Failed to parse AI suggestion:', e);
         }
     }
+
+    // Fetch questions to resolve essay question text
+    useEffect(() => {
+        quizService.getQuestions(result.subject).then(qs => {
+            setQuestions(qs || []);
+        });
+    }, [result.subject]);
+
+    const getQuestionText = (questionId: number) => {
+        const q = questions.find(q => q.id === questionId);
+        return q?.text ?? null;
+    };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -105,33 +119,77 @@ export const AdminResultViewer: React.FC<AdminResultViewerProps> = ({ result, on
                             </h3>
                             <div className="space-y-4">
                                 {essayDetails.length > 0 ? (
-                                    essayDetails.map((detail, idx) => (
-                                        <div key={detail.questionId} className="bg-gray-800/40 rounded-xl p-5 border border-purple-500/20">
-                                            <div className="flex justify-between items-center mb-3">
-                                                <span className="font-bold text-purple-300">Essay #{idx + 1}</span>
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${detail.score >= 75 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                                                    Score: {detail.score}/100
-                                                </span>
+                                    essayDetails.map((detail, idx) => {
+                                        const questionText = getQuestionText(detail.questionId);
+                                        return (
+                                            <div key={detail.questionId} className="bg-gray-800/40 rounded-xl p-5 border border-purple-500/20 space-y-3">
+                                                {/* Header */}
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-bold text-purple-300">Essay #{idx + 1}</span>
+                                                    <span className={`px-2 py-1 rounded text-xs font-bold ${detail.score >= 75 ? 'bg-green-500/20 text-green-400' : detail.score >= 50 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'}`}>
+                                                        Score: {detail.score}/100
+                                                    </span>
+                                                </div>
+
+                                                {/* Question Text */}
+                                                {questionText && (
+                                                    <div className="bg-gray-900/60 border border-gray-700/50 rounded-lg p-3">
+                                                        <div className="text-xs font-semibold text-gray-500 mb-1">Soal:</div>
+                                                        <p className="text-sm text-gray-200 whitespace-pre-wrap">{questionText}</p>
+                                                    </div>
+                                                )}
+
+                                                {/* Student Answer */}
+                                                <div className="bg-gray-900 p-3 rounded-lg border border-gray-700">
+                                                    <div className="text-xs text-gray-500 mb-1">Jawaban Mahasiswa:</div>
+                                                    <p className="text-sm text-gray-300 whitespace-pre-wrap">{essayAnswers[detail.questionId] || '(Kosong)'}</p>
+                                                </div>
+
+                                                {/* AI Feedback */}
+                                                {detail.feedback && (
+                                                    <p className="text-sm text-gray-400 italic border-l-2 border-purple-500/40 pl-3">"{detail.feedback}"</p>
+                                                )}
+
+                                                {/* Strengths & Weaknesses */}
+                                                {(detail.strengths || detail.weaknesses) && (
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div className="bg-green-500/8 border border-green-500/20 rounded-lg p-3">
+                                                            <div className="text-xs font-semibold text-green-400 mb-1 flex items-center gap-1">
+                                                                <CheckCircle2 size={12} /> Kelebihan
+                                                            </div>
+                                                            <p className="text-xs text-gray-400">{detail.strengths || '-'}</p>
+                                                        </div>
+                                                        <div className="bg-red-500/8 border border-red-500/20 rounded-lg p-3">
+                                                            <div className="text-xs font-semibold text-red-400 mb-1 flex items-center gap-1">
+                                                                <XCircleIcon size={12} /> Kekurangan
+                                                            </div>
+                                                            <p className="text-xs text-gray-400">{detail.weaknesses || '-'}</p>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="mb-4 bg-gray-900 p-3 rounded-lg border border-gray-700">
-                                                <div className="text-xs text-gray-500 mb-1">Jawaban Mahasiswa:</div>
-                                                <p className="text-sm text-gray-300 whitespace-pre-wrap">{essayAnswers[detail.questionId] || '(Kosong)'}</p>
-                                            </div>
-                                            {detail.feedback && (
-                                                <p className="text-sm text-gray-400 italic mb-3">" {detail.feedback} "</p>
-                                            )}
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 ) : (
-                                    // Fallback if no AI details
-                                    Object.entries(essayAnswers).map(([qId, ans], idx) => (
-                                        <div key={qId} className="bg-gray-800/40 rounded-xl p-5 border border-gray-700">
-                                            <span className="font-bold text-gray-400 mb-3 block">Essay #{idx + 1}</span>
-                                            <div className="bg-gray-900 p-3 rounded-lg border border-gray-700">
-                                                <p className="text-sm text-gray-300 whitespace-pre-wrap">{ans as string}</p>
+                                    // Fallback: no AI details, just show raw essay answers with question text
+                                    Object.entries(essayAnswers).map(([qId, ans], idx) => {
+                                        const qText = getQuestionText(Number(qId));
+                                        return (
+                                            <div key={qId} className="bg-gray-800/40 rounded-xl p-5 border border-gray-700 space-y-3">
+                                                <span className="font-bold text-gray-400 block">Essay #{idx + 1}</span>
+                                                {qText && (
+                                                    <div className="bg-gray-900/60 border border-gray-700/50 rounded-lg p-3">
+                                                        <div className="text-xs font-semibold text-gray-500 mb-1">Soal:</div>
+                                                        <p className="text-sm text-gray-200">{qText}</p>
+                                                    </div>
+                                                )}
+                                                <div className="bg-gray-900 p-3 rounded-lg border border-gray-700">
+                                                    <div className="text-xs text-gray-500 mb-1">Jawaban Mahasiswa:</div>
+                                                    <p className="text-sm text-gray-300 whitespace-pre-wrap">{ans as string}</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </div>
                         </div>

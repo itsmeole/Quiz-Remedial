@@ -1,9 +1,36 @@
 import type { EssayScoreResult } from '../types';
 
+// ── Ollama (Local AI) Config ──────────────────────────────────────────
+const OLLAMA_URL = import.meta.env.VITE_OLLAMA_URL || 'http://localhost:11434';
+const OLLAMA_MODEL = import.meta.env.VITE_OLLAMA_MODEL || 'qwen2.5:7b';
+
+// ── Groq (Cloud Fallback) Config ──────────────────────────────────────
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL = 'llama-3.3-70b-versatile';
+const GROQ_MODEL = 'llama-3.3-70b-versatile';
 
+// ── Ollama Call ───────────────────────────────────────────────────────
+async function callOllama(systemPrompt: string, userPrompt: string): Promise<string> {
+    const response = await fetch(`${OLLAMA_URL}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            model: OLLAMA_MODEL,
+            stream: false,
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt },
+            ],
+            options: { temperature: 0.4 },
+        }),
+    });
+
+    if (!response.ok) throw new Error(`Ollama error ${response.status}`);
+    const data = await response.json();
+    return data.message?.content as string;
+}
+
+// ── Groq Call ─────────────────────────────────────────────────────────
 async function callGroq(systemPrompt: string, userPrompt: string, maxTokens = 1024): Promise<string> {
     if (!GROQ_API_KEY) throw new Error('VITE_GROQ_API_KEY is not set');
 
@@ -14,7 +41,7 @@ async function callGroq(systemPrompt: string, userPrompt: string, maxTokens = 10
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            model: MODEL,
+            model: GROQ_MODEL,
             messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: userPrompt },
@@ -33,15 +60,30 @@ async function callGroq(systemPrompt: string, userPrompt: string, maxTokens = 10
     return data.choices[0].message.content as string;
 }
 
+// ── Unified Call: Ollama first, Groq as fallback ──────────────────────
+async function callAI(systemPrompt: string, userPrompt: string, maxTokens = 1024): Promise<string> {
+    try {
+        console.log(`🤖 Trying Ollama (${OLLAMA_MODEL})...`);
+        const result = await callOllama(systemPrompt, userPrompt);
+        console.log('✅ Ollama responded');
+        return result;
+    } catch (ollamaErr) {
+        console.warn('⚠️ Ollama unavailable, falling back to Groq:', ollamaErr);
+        if (!GROQ_API_KEY) throw new Error('Ollama tidak tersedia dan VITE_GROQ_API_KEY tidak di-set.');
+        const result = await callGroq(systemPrompt, userPrompt, maxTokens);
+        console.log('✅ Groq fallback responded');
+        return result;
+    }
+}
+
 function cleanJson(raw: string): string {
     return raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 }
 
 export const groqService = {
     /**
-     * Score each essay answer using Groq AI.
+     * Score each essay answer using AI (Ollama local or Groq fallback).
      * Returns structured result: score, feedback, strengths, weaknesses, study_suggestions.
-     * study_suggestions are used for the overall AI suggestion section.
      */
     async scoreEssayAnswers(
         questions: Array<{ id: number; text: string }>,
@@ -50,7 +92,6 @@ export const groqService = {
     ): Promise<EssayScoreResult[]> {
         if (questions.length === 0) return [];
 
-        // Evaluate each essay question individually to keep JSON small and accurate
         const results: EssayScoreResult[] = [];
 
         for (const q of questions) {
@@ -58,26 +99,39 @@ export const groqService = {
             const ref = correctAnswers[q.id];
             const hasCorrectAnswer = !!ref;
 
-            const systemPrompt =
-                'Kamu adalah dosen yang menilai jawaban essay mahasiswa dengan adil dan objektif. ' +
-                (hasCorrectAnswer ? 'Gunakan "Jawaban Kunci" sebagai acuan utama penilaian. ' : '') +
-                'Balas HANYA dengan JSON, tanpa markdown, tanpa teks tambahan.';
+            const systemPrompt = hasCorrectAnswer
+                ? 'Kamu adalah dosen yang menilai jawaban essay mahasiswa secara KETAT berdasarkan Jawaban Kunci yang diberikan. ' +
+                  'ATURAN WAJIB: ' +
+                  '(1) Nilai HANYA berdasarkan kesesuaian dengan Jawaban Kunci — JANGAN tambahkan kriteria, pengetahuan, atau standar lain di luar Jawaban Kunci. ' +
+                  '(2) Jika jawaban mahasiswa mencakup semua poin dalam Jawaban Kunci, berikan nilai 95-100. ' +
+                  '(3) Kekurangan HANYA boleh disebut jika poin tersebut ada dalam Jawaban Kunci namun tidak disebutkan oleh mahasiswa. ' +
+                  '(4) DILARANG mengurangi nilai karena mahasiswa tidak menyebut hal yang tidak ada di Jawaban Kunci. ' +
+                  'Balas HANYA dengan JSON, tanpa markdown, tanpa teks tambahan.'
+                : 'Kamu adalah dosen yang menilai jawaban essay mahasiswa secara adil dan objektif berdasarkan konten dan relevansi jawaban. ' +
+                  'Balas HANYA dengan JSON, tanpa markdown, tanpa teks tambahan.';
 
             const userPrompt =
                 `Soal: ${q.text}\n` +
                 `Jawaban Mahasiswa: ${studentAnswer}\n` +
-                (hasCorrectAnswer ? `Jawaban Kunci: ${ref}\n` : '') +
+                (hasCorrectAnswer
+                    ? `Jawaban Kunci (acuan SATU-SATUNYA untuk penilaian): ${ref}\n\n` +
+                      `Instruksi penilaian:\n` +
+                      `- Bandingkan Jawaban Mahasiswa dengan Jawaban Kunci secara langsung.\n` +
+                      `- Jika jawaban mahasiswa mencakup inti/makna yang sama dengan kunci, nilai harus tinggi (90-100).\n` +
+                      `- Kekurangan HANYA dicatat jika poin kunci tidak disebutkan mahasiswa.\n` +
+                      `- JANGAN kurangi nilai karena mahasiswa tidak menyebut hal di luar kunci jawaban.\n`
+                    : '') +
                 `\nBerikan evaluasi dalam format JSON berikut:\n` +
                 `{\n` +
                 `  "score": <angka 0-100>,\n` +
-                `  "feedback": "<komentar 2-3 kalimat tentang kualitas jawaban${hasCorrectAnswer ? ', sebutkan poin mana yang sudah sesuai kunci' : ''}>",\n` +
-                `  "strengths": "<apa yang sudah benar dari jawaban mahasiswa, atau '-' jika kosong/tidak relevan>",\n` +
-                `  "weaknesses": "<apa yang kurang atau tidak sesuai kunci jawaban>",\n` +
+                `  "feedback": "<komentar 2-3 kalimat tentang kesesuaian jawaban dengan kunci>",\n` +
+                `  "strengths": "<poin dari kunci yang sudah terpenuhi dalam jawaban mahasiswa>",\n` +
+                `  "weaknesses": "<poin dari kunci yang TIDAK disebutkan mahasiswa, atau '-' jika semua terpenuhi>",\n` +
                 `  "study_suggestions": ["<saran spesifik 1>", "<saran spesifik 2>", "<saran spesifik 3>"]\n` +
                 `}`;
 
             try {
-                const raw = await callGroq(systemPrompt, userPrompt, 600);
+                const raw = await callAI(systemPrompt, userPrompt, 600);
                 const parsed = JSON.parse(cleanJson(raw));
                 results.push({
                     questionId: q.id,
@@ -104,10 +158,7 @@ export const groqService = {
     },
 
     /**
-     * Generate overall study suggestions (string[]) based on:
-     * - PG wrong questions (from pg_answers_detail)
-     * - Essay study suggestions collected from per-question scoring
-     * Returns an array of 4-6 actionable study suggestions.
+     * Generate overall study suggestions based on PG wrongs + essay suggestions.
      */
     async generateSuggestion(
         pgScore: number,
@@ -118,7 +169,7 @@ export const groqService = {
         pgAnswersDetail: Array<{ question_id: number; question_text: string; is_correct: boolean }> = [],
         essayStudySuggestions: string[] = []
     ): Promise<string[]> {
-        const subjectName = subject === 'linear-algebra' ? 'Aljabar Linear' : 'Kalkulus';
+        const subjectName = subject === 'linear-algebra' ? 'Aljabar Linear' : subject;
 
         const systemPrompt =
             'Kamu adalah asisten akademik yang memberi saran belajar personal dan praktis kepada mahasiswa. ' +
@@ -151,7 +202,7 @@ export const groqService = {
             `Kembalikan JSON:\n{"study_suggestions": ["<saran 1>", "<saran 2>", ...]}`;
 
         try {
-            const raw = await callGroq(systemPrompt, userPrompt, 700);
+            const raw = await callAI(systemPrompt, userPrompt, 700);
             const parsed = JSON.parse(cleanJson(raw));
             return Array.isArray(parsed.study_suggestions) ? parsed.study_suggestions : [];
         } catch (e) {

@@ -53,7 +53,7 @@ export const AdminScreen: React.FC = () => {
         if (!confirm('Are you sure you want to delete this result? This cannot be undone.')) return;
         
         if (!supabase) return;
-        const { error } = await supabase.from('quiz_results').delete().eq('id', id);
+        const { error } = await supabase.rpc('admin_delete_quiz_result', { p_id: id });
         if (error) {
             alert('Failed to delete: ' + error.message);
         } else {

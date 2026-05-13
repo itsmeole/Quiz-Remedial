@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, Send, AlertTriangle, FileText } from 'lucide-react';
+import { ChevronLeft, Send, AlertTriangle, FileText, Loader2 } from 'lucide-react';
 import type { Question } from '../types';
 
 interface ReviewScreenProps {
@@ -8,9 +8,10 @@ interface ReviewScreenProps {
     essayAnswers: Record<number, string>;
     onBack: () => void;
     onSubmit: () => void;
+    isSubmitting?: boolean;
 }
 
-export const ReviewScreen: React.FC<ReviewScreenProps> = ({ questions, answers, essayAnswers, onBack, onSubmit }) => {
+export const ReviewScreen: React.FC<ReviewScreenProps> = ({ questions, answers, essayAnswers, onBack, onSubmit, isSubmitting = false }) => {
     const pgQuestions = questions.filter(q => q.type === 'multiple-choice');
     const essayQuestions = questions.filter(q => q.type === 'essay');
 
@@ -103,14 +104,15 @@ export const ReviewScreen: React.FC<ReviewScreenProps> = ({ questions, answers, 
                 )}
 
                 <div className="flex justify-between mt-8 border-t border-gray-700 pt-8">
-                    <button onClick={onBack} className="flex items-center gap-2 px-6 py-3 rounded-lg text-white hover:bg-gray-700/50 transition-colors">
+                    <button onClick={onBack} disabled={isSubmitting} className="flex items-center gap-2 px-6 py-3 rounded-lg text-white hover:bg-gray-700/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
                         <ChevronLeft size={20} /> Kembali ke Quiz
                     </button>
                     <button
                         onClick={onSubmit}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition-all hover:scale-[1.02] flex items-center gap-2"
+                        disabled={isSubmitting}
+                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition-all hover:scale-[1.02] disabled:scale-100 flex items-center gap-2"
                     >
-                        Kirim Jawaban <Send size={20} />
+                        {isSubmitting ? <><Loader2 size={20} className="animate-spin" /> Memproses...</> : <>Kirim Jawaban <Send size={20} /></>}
                     </button>
                 </div>
             </div>

@@ -36,6 +36,7 @@ function App() {
   const [pgAnswersDetail, setPgAnswersDetail] = useState<Array<{ question_id: number; question_text: string; is_correct: boolean }>>([]);
   const [aiSuggestion, setAiSuggestion] = useState<string[]>([]);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [resultId, setResultId] = useState<string | null>(null);
   const [isPassed, setIsPassed] = useState(false);
   const [createdAt, setCreatedAt] = useState<string>('');
@@ -201,6 +202,8 @@ function App() {
 
   const handleSubmit = async () => {
     if (!userData) return;
+    if (isSubmitting) return; // guard: prevent double submission
+    setIsSubmitting(true);
 
     try {
       const essayQuestions = shuffledQuestions
@@ -294,6 +297,7 @@ function App() {
       }
     } catch (err) {
       console.error('Failed to submit:', err);
+      setIsSubmitting(false);
       if (err instanceof Error && err.message !== 'Auto-submit') {
         alert('Gagal menyimpan jawaban. Coba lagi.');
         return;
@@ -369,12 +373,13 @@ function App() {
       )}
 
       {gameState === 'REVIEW' && (
-        <ReviewScreen
+      <ReviewScreen
           questions={shuffledQuestions}
           answers={answers}
           essayAnswers={essayAnswers}
           onBack={handleReviewBack}
           onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
         />
       )}
 

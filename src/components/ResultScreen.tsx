@@ -108,7 +108,6 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
                     </div>
                     <div className="text-left">
                         <div className="font-bold text-white text-sm">Saran Belajar AI</div>
-                        <div className="text-xs text-gray-400">Powered by Groq · llama-3.3-70b</div>
                     </div>
                 </div>
                 {showSuggestion ? <ChevronUp size={18} className="text-gray-400 flex-shrink-0" /> : <ChevronDown size={18} className="text-gray-400 flex-shrink-0" />}
@@ -288,7 +287,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
                                 {essayScoreDetails.map((d, i) => {
                                     const q = questions.find(q => q.id === d.questionId);
                                     const qText = q ? q.text : `Essay ${i + 1}`;
-                                    
+
                                     return (
                                         <div key={d.questionId} className="bg-gray-800/50 rounded-xl p-5 border border-purple-500/20">
                                             {/* Header */}
@@ -302,35 +301,35 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
                                             <div className="mb-3">
                                                 <p className="text-sm text-gray-200 font-medium whitespace-pre-wrap">{qText}</p>
                                             </div>
-                                        {/* Score bar */}
-                                        <div className="h-1.5 bg-gray-700 rounded-full mb-4 overflow-hidden">
-                                            <div className={`h-full rounded-full transition-all duration-700 ${d.score >= 75 ? 'bg-green-400' : d.score >= 50 ? 'bg-yellow-400' : 'bg-red-400'}`}
-                                                style={{ width: `${d.score}%` }} />
-                                        </div>
-                                        {/* Jawaban User */}
-                                        <div className="mb-4 bg-gray-900/50 p-3 rounded-lg border border-gray-700/50">
-                                            <div className="text-xs font-semibold text-gray-400 mb-1">Jawaban Anda:</div>
-                                            <p className="text-sm text-gray-300 whitespace-pre-wrap">{essayAnswers[d.questionId] || '(Tidak dijawab)'}</p>
-                                        </div>
-                                        {/* Feedback */}
-                                        {d.feedback && (
-                                            <p className="text-sm text-gray-300 leading-relaxed mb-3 italic">"{d.feedback}"</p>
-                                        )}
-                                        {/* Strengths & Weaknesses */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            <div className="bg-green-500/8 border border-green-500/20 rounded-lg p-3">
-                                                <div className="text-xs font-semibold text-green-400 mb-1 flex items-center gap-1.5">
-                                                    <CheckCircle2 size={12} /> Kelebihan
-                                                </div>
-                                                <p className="text-xs text-gray-400 leading-relaxed">{d.strengths || '-'}</p>
+                                            {/* Score bar */}
+                                            <div className="h-1.5 bg-gray-700 rounded-full mb-4 overflow-hidden">
+                                                <div className={`h-full rounded-full transition-all duration-700 ${d.score >= 75 ? 'bg-green-400' : d.score >= 50 ? 'bg-yellow-400' : 'bg-red-400'}`}
+                                                    style={{ width: `${d.score}%` }} />
                                             </div>
-                                            <div className="bg-red-500/8 border border-red-500/20 rounded-lg p-3">
-                                                <div className="text-xs font-semibold text-red-400 mb-1 flex items-center gap-1.5">
-                                                    <XCircleIcon size={12} /> Kekurangan
-                                                </div>
-                                                <p className="text-xs text-gray-400 leading-relaxed">{d.weaknesses || '-'}</p>
+                                            {/* Jawaban User */}
+                                            <div className="mb-4 bg-gray-900/50 p-3 rounded-lg border border-gray-700/50">
+                                                <div className="text-xs font-semibold text-gray-400 mb-1">Jawaban Anda:</div>
+                                                <p className="text-sm text-gray-300 whitespace-pre-wrap">{essayAnswers[d.questionId] || '(Tidak dijawab)'}</p>
                                             </div>
-                                        </div>
+                                            {/* Feedback */}
+                                            {d.feedback && (
+                                                <p className="text-sm text-gray-300 leading-relaxed mb-3 italic">"{d.feedback}"</p>
+                                            )}
+                                            {/* Strengths & Weaknesses */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div className="bg-green-500/8 border border-green-500/20 rounded-lg p-3">
+                                                    <div className="text-xs font-semibold text-green-400 mb-1 flex items-center gap-1.5">
+                                                        <CheckCircle2 size={12} /> Kelebihan
+                                                    </div>
+                                                    <p className="text-xs text-gray-400 leading-relaxed">{d.strengths || '-'}</p>
+                                                </div>
+                                                <div className="bg-red-500/8 border border-red-500/20 rounded-lg p-3">
+                                                    <div className="text-xs font-semibold text-red-400 mb-1 flex items-center gap-1.5">
+                                                        <XCircleIcon size={12} /> Kekurangan
+                                                    </div>
+                                                    <p className="text-xs text-gray-400 leading-relaxed">{d.weaknesses || '-'}</p>
+                                                </div>
+                                            </div>
                                         </div>
                                     );
                                 })}
