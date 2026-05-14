@@ -6,7 +6,7 @@ import { AdminLogin } from './AdminLogin';
 import { AdminResultViewer } from './AdminResultViewer';
 import { AdminResultEditor } from './AdminResultEditor';
 import type { QuizResult } from '../types';
-import { Download, RefreshCw, BookOpen, List, LogOut, Eye, Edit2, Trash2 } from 'lucide-react';
+import { Download, RefreshCw, BookOpen, List, LogOut, Eye, Edit2, Trash2, Settings, ChevronDown, ArrowDown, ArrowUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Session } from '@supabase/supabase-js';
 
 export const AdminScreen: React.FC = () => {
@@ -19,6 +19,12 @@ export const AdminScreen: React.FC = () => {
     const [showSubjectManager, setShowSubjectManager] = useState(false);
     const [viewingResult, setViewingResult] = useState<QuizResult | null>(null);
     const [editingResult, setEditingResult] = useState<QuizResult | null>(null);
+    const [showManageDropdown, setShowManageDropdown] = useState(false);
+    const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+    
+    // Pagination state
+    const ITEMS_PER_PAGE = 10;
+    const [currentPage, setCurrentPage] = useState(1);
 
     const fetchResults = async () => {
         setLoading(true);
@@ -38,13 +44,14 @@ export const AdminScreen: React.FC = () => {
         const { data, error } = await supabase
             .from('quiz_results')
             .select('*')
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: sortOrder === 'asc' });
 
         if (error) {
             console.error(error);
             setError(error.message);
         } else {
             setResults(data || []);
+            setCurrentPage(1); // Reset to first page on refresh/sort
         }
         setLoading(false);
     };
@@ -86,7 +93,7 @@ export const AdminScreen: React.FC = () => {
         if (session) {
             fetchResults();
         }
-    }, [session]);
+    }, [session, sortOrder]);
 
     const handleLogout = async () => {
         if (supabase) {
@@ -132,6 +139,9 @@ export const AdminScreen: React.FC = () => {
         return <QuestionManager onBack={() => setShowQuestionManager(false)} />;
     }
 
+    const totalPages = Math.ceil(results.length / ITEMS_PER_PAGE);
+    const paginatedResults = results.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
     return (
         <div className="min-h-screen pt-20 p-6 max-w-7xl mx-auto flex flex-col">
             <div className="glass-panel p-8 w-full">
@@ -167,18 +177,41 @@ export const AdminScreen: React.FC = () => {
                             <LogOut size={18} />
                             <span className="hidden sm:inline">Logout</span>
                         </button>
-                        <button
-                            onClick={() => setShowSubjectManager(true)}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-bold shadow-lg transition-colors"
-                        >
-                            <BookOpen size={20} /> Manage Subjects
-                        </button>
-                        <button
-                            onClick={() => setShowQuestionManager(true)}
-                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-bold shadow-lg transition-colors"
-                        >
-                            <List size={20} /> Manage Questions
-                        </button>
+                        {/* Manage Dropdown */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowManageDropdown(!showManageDropdown)}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-bold shadow-lg transition-colors"
+                            >
+                                <Settings size={20} /> Manage <ChevronDown size={16} />
+                            </button>
+
+                            {showManageDropdown && (
+                                <>
+                                    <div className="fixed inset-0 z-10" onClick={() => setShowManageDropdown(false)}></div>
+                                    <div className="absolute right-0 mt-2 w-48 bg-[#1a1c1e] border border-gray-700 rounded-xl shadow-2xl overflow-hidden z-20">
+                                        <button
+                                            onClick={() => {
+                                                setShowManageDropdown(false);
+                                                setShowSubjectManager(true);
+                                            }}
+                                            className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-gray-800 text-gray-300 transition-colors border-b border-gray-800"
+                                        >
+                                            <BookOpen size={18} /> Subjects
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setShowManageDropdown(false);
+                                                setShowQuestionManager(true);
+                                            }}
+                                            className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-gray-800 text-gray-300 transition-colors"
+                                        >
+                                            <List size={18} /> Questions
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -195,7 +228,16 @@ export const AdminScreen: React.FC = () => {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="border-b border-gray-700 text-gray-400 text-sm uppercase tracking-wider">
-                                    <th className="p-4">Time</th>
+                                    <th 
+                                        className="p-4 cursor-pointer hover:text-gray-200 transition-colors select-none"
+                                        onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+                                        title="Click to sort by date"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            Time
+                                            {sortOrder === 'desc' ? <ArrowDown size={14} /> : <ArrowUp size={14} />}
+                                        </div>
+                                    </th>
                                     <th className="p-4">Subject</th>
                                     <th className="p-4">Name</th>
                                     <th className="p-4">NIM</th>
@@ -213,7 +255,7 @@ export const AdminScreen: React.FC = () => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    results.map((row) => (
+                                    paginatedResults.map((row) => (
                                         <tr key={row.id} className="border-b border-gray-800 hover:bg-gray-800/30 transition-colors">
                                             <td className="p-4 text-sm text-gray-300">
                                                 {new Date(row.created_at).toLocaleString()}
@@ -255,6 +297,34 @@ export const AdminScreen: React.FC = () => {
                                 )}
                             </tbody>
                         </table>
+                    </div>
+                )}
+
+                {/* Pagination Controls */}
+                {!loading && totalPages > 1 && (
+                    <div className="flex justify-between items-center mt-6 text-sm text-gray-400">
+                        <div>
+                            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, results.length)} of {results.length} entries
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ChevronLeft size={16} />
+                            </button>
+                            <div className="flex items-center px-4 font-medium text-white bg-gray-800/50 rounded-lg border border-gray-700">
+                                Page {currentPage} of {totalPages}
+                            </div>
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

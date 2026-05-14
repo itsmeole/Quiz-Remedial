@@ -26,7 +26,7 @@ export interface UserData {
     subject: string;
 }
 
-export type GameState = 'WELCOME' | 'QUIZ' | 'REVIEW' | 'RESULT' | 'ADMIN';
+export type GameState = 'WELCOME' | 'QUIZ' | 'REVIEW' | 'RESULT' | 'ADMIN' | 'NOT_FOUND';
 
 export interface QuizResult {
     id: string;

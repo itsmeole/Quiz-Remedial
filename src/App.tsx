@@ -49,6 +49,10 @@ function App() {
   useEffect(() => {
     const path = window.location.pathname;
 
+    if (path === '/' || path === '') {
+      return;
+    }
+
     if (path === '/admin') {
       setGameState('ADMIN');
       return;
@@ -100,6 +104,8 @@ function App() {
           window.history.replaceState({}, '', '/');
         }
       });
+    } else {
+      setGameState('NOT_FOUND');
     }
   }, []);
 
@@ -408,6 +414,31 @@ function App() {
       )}
 
       {gameState === 'ADMIN' && <AdminScreen />}
+
+      {gameState === 'NOT_FOUND' && (
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center z-10 relative">
+          <div className="glass-panel p-8 md:p-10 flex flex-col items-center justify-center max-w-xl w-full shadow-[0_0_50px_rgba(0,0,0,0.5)] border-red-500/20">
+            <img 
+              src="/images.jpg" 
+              alt="Hayooo mau ngapain kamu" 
+              className="max-w-xs md:max-w-md w-full rounded-2xl shadow-2xl mb-8 object-cover border-4 border-gray-800"
+            />
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-4 tracking-tight">Hayooo mau ngapain kamu 🫵🏻😂</h1>
+            <p className="text-gray-300 mb-8 max-w-md text-lg bg-red-500/10 py-2 px-4 rounded-lg border border-red-500/20">
+              URL yang kamu masukkan tidak valid.
+            </p>
+            <button 
+              onClick={() => {
+                window.history.replaceState({}, '', '/');
+                setGameState('WELCOME');
+              }}
+              className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-full transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(37,99,235,0.4)]"
+            >
+              Kembali ke Jalan yang Benar😇
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Blocked / Error Modal */}
       {blockedReason && (

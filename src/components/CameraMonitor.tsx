@@ -6,13 +6,21 @@ const detector = new YoloDetector();
 
 interface CameraMonitorProps {
     onViolation?: (msg: string) => void;
+    onWarning?: (msg: string) => void;
+    onStatusChange?: (status: 'loading' | 'active' | 'error' | 'denied') => void;
 }
 
-export const CameraMonitor: React.FC<CameraMonitorProps> = ({ onViolation }) => {
+export const CameraMonitor: React.FC<CameraMonitorProps> = ({ onViolation, onWarning, onStatusChange }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const overlayRef = useRef<HTMLCanvasElement>(null);
     const [status, setStatus] = useState<'loading' | 'active' | 'error' | 'denied'>('loading');
     const [debugMsg, setDebugMsg] = useState<string>("Initializing...");
+
+    useEffect(() => {
+        if (onStatusChange) {
+            onStatusChange(status);
+        }
+    }, [status, onStatusChange]);
 
     useEffect(() => {
         let stream: MediaStream | null = null;
@@ -59,6 +67,8 @@ export const CameraMonitor: React.FC<CameraMonitorProps> = ({ onViolation }) => 
                 return;
             }
 
+            let lastPersonDetectedTime = Date.now();
+
             detectionInterval = setInterval(async () => {
                 if (!videoRef.current || status !== 'active') return;
 
@@ -83,6 +93,18 @@ export const CameraMonitor: React.FC<CameraMonitorProps> = ({ onViolation }) => 
                     
                     if (cellPhone && onViolation) {
                         onViolation("Terdeteksi menggunakan HP!");
+                    }
+
+                    // 3-Minute "No Person" Detection
+                    const hasPerson = items.some(item => item.label === 'person');
+                    if (hasPerson) {
+                        lastPersonDetectedTime = Date.now();
+                    } else {
+                        // 180,000 ms = 3 minutes
+                        if (Date.now() - lastPersonDetectedTime > 180000) {
+                            if (onWarning) onWarning("Harap selalu berada di depan kamera!");
+                            lastPersonDetectedTime = Date.now(); // Reset to avoid spam
+                        }
                     }
                 } catch (err) {
                     console.error("Inference error:", err);

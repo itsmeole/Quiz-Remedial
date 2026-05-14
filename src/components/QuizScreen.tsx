@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, CheckCircle, Circle, Clock, AlertCircle, FileText, Pencil } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, Circle, Clock, AlertCircle, FileText, Pencil, CameraOff } from 'lucide-react';
 import type { Question } from '../types';
 import { CameraMonitor } from './CameraMonitor';
 
@@ -22,6 +22,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({
     const [strikeCount, setStrikeCount] = useState(0);
     const [warning, setWarning] = useState<string | null>(null);
     const [modalTimer, setModalTimer] = useState(10);
+    const [cameraStatus, setCameraStatus] = useState<'loading' | 'active' | 'error' | 'denied'>('loading');
 
     const question = questions[currentIdx];
 
@@ -48,13 +49,14 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({
         return () => clearInterval(interval);
     }, [warning, violation]);
 
+    const handleViolation = React.useCallback((msg: string) => {
+        if (violation) return;
+        if (strikeCount === 0) { setWarning(msg); setStrikeCount(1); }
+        else setViolation(msg);
+    }, [strikeCount, violation]);
+
     // Anti-cheat
     React.useEffect(() => {
-        const handleViolation = (msg: string) => {
-            if (violation) return;
-            if (strikeCount === 0) { setWarning(msg); setStrikeCount(1); }
-            else setViolation(msg);
-        };
         const onVisibility = () => { if (document.hidden) handleViolation('Terdeteksi berpindah tab!'); };
         const onBlur = () => handleViolation('Terdeteksi meninggalkan jendela ujian!');
         document.addEventListener('visibilitychange', onVisibility);
@@ -63,7 +65,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({
             document.removeEventListener('visibilitychange', onVisibility);
             window.removeEventListener('blur', onBlur);
         };
-    }, [strikeCount, violation]);
+    }, [handleViolation]);
 
     const formatTime = (seconds: number) => {
         const h = Math.floor(seconds / 3600);
@@ -82,11 +84,34 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({
     const currentEssayText = essayAnswers[question?.id] ?? '';
     const wordCount = currentEssayText.trim().split(/\s+/).filter(Boolean).length;
 
+    const isUIBlocked = cameraStatus !== 'active' || warning !== null || violation !== null;
+
     return (
         <div className="flex flex-col md:flex-row gap-6 p-6 max-w-7xl mx-auto w-full min-h-screen pt-20 pb-20 md:pb-6">
             {/* Main Question Area */}
             <div className="flex-1 flex flex-col gap-6 order-2 md:order-1">
-                <div className="glass-panel p-6 md:p-8 flex-1 flex flex-col relative">
+                {isUIBlocked ? (
+                    <div className="glass-panel flex-1 flex flex-col items-center justify-center p-8 text-center bg-gray-900/50 border border-gray-700/50 relative overflow-hidden min-h-[400px]">
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-md z-0" />
+                        <div className="relative z-10 flex flex-col items-center">
+                            {cameraStatus !== 'active' ? (
+                                <>
+                                    <CameraOff size={64} className="text-gray-500 mb-4 animate-pulse" />
+                                    <h2 className="text-2xl font-bold text-white mb-2">Menunggu Kamera Aktif</h2>
+                                    <p className="text-gray-400 max-w-md">Kuis tidak dapat dilanjutkan sebelum kamera diizinkan dan menyala. Harap periksa izin browser Anda.</p>
+                                </>
+                            ) : (
+                                <>
+                                    <AlertCircle size={64} className="text-yellow-500 mb-4 animate-pulse" />
+                                    <h2 className="text-2xl font-bold text-white mb-2">Kuis Dijeda Sementara</h2>
+                                    <p className="text-gray-400 max-w-md">Harap selesaikan peringatan keamanan di layar Anda untuk melanjutkan.</p>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <div className="glass-panel p-6 md:p-8 flex-1 flex flex-col relative">
                     {/* Header */}
                     <div className="flex flex-col-reverse md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-gray-700/50 pb-4">
                         <div className="flex flex-col gap-1">
@@ -166,23 +191,30 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({
                     <button onClick={onFinish} className="md:hidden text-green-400 font-bold hover:text-green-300 transition-colors">
                         Review &amp; Finish
                     </button>
-                    <button
-                        onClick={handleNext}
-                        className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 shadow-lg transition-transform active:scale-95"
-                    >
-                        {currentIdx === questions.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={20} />
-                    </button>
-                </div>
+                        <button
+                            onClick={handleNext}
+                            className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 shadow-lg transition-transform active:scale-95"
+                        >
+                            {currentIdx === questions.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={20} />
+                        </button>
+                    </div>
+                </>
+                )}
             </div>
 
             {/* Sidebar */}
             <div className="flex flex-col gap-6 w-full md:w-80 order-1 md:order-2">
                 <div className="glass-panel p-2 h-57 md:h-45 flex items-center justify-center">
-                    <CameraMonitor onViolation={(msg) => setViolation(msg)} />
+                    <CameraMonitor 
+                        onViolation={(msg) => setViolation(msg)}
+                        onWarning={handleViolation}
+                        onStatusChange={setCameraStatus}
+                    />
                 </div>
 
-                <div className="hidden md:flex flex-1 glass-panel p-6 overflow-y-auto flex-col">
-                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                {!isUIBlocked && (
+                    <div className="hidden md:flex flex-1 glass-panel p-6 overflow-y-auto flex-col">
+                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                         <Circle size={12} className="fill-blue-500 text-blue-500" /> Question Map
                     </h3>
                     <div className="grid grid-cols-5 gap-2">
@@ -225,6 +257,7 @@ export const QuizScreen: React.FC<QuizScreenProps> = ({
                         <CheckCircle size={18} /> Review &amp; Submit
                     </button>
                 </div>
+                )}
             </div>
 
             {/* Warning Modal */}
