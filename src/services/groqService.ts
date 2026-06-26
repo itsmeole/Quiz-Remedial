@@ -7,7 +7,7 @@ const OLLAMA_MODEL = import.meta.env.VITE_OLLAMA_MODEL || 'qwen2.5:7b';
 // ── Groq (Cloud Fallback) Config ──────────────────────────────────────
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'llama-3.3-70b-versatile';
+const GROQ_MODEL = 'llama-3.1-8b-instant';
 
 // ── Ollama Call ───────────────────────────────────────────────────────
 async function callOllama(systemPrompt: string, userPrompt: string): Promise<string> {
