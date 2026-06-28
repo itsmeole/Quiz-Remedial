@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { WelcomeScreen } from './components/WelcomeScreen';
 import { QuizScreen } from './components/QuizScreen';
 import { ReviewScreen } from './components/ReviewScreen';
@@ -14,6 +14,15 @@ import bgImage from './assets/bg.png';
 const MAX_STRIKES = 5;
 const RESET_TIMER = 300;
 const QUIZ_DURATION_SECONDS = 3600; // Set to 60 minutes
+
+// Debounce helper: menghindari terlalu sering panggil Supabase saat user mengetik
+function debounce<T extends (...args: any[]) => void>(fn: T, ms: number): T {
+  let timer: ReturnType<typeof setTimeout>;
+  return ((...args: any[]) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  }) as T;
+}
 
 function App() {
   const [gameState, setGameState] = useState<GameState>('WELCOME');
@@ -45,9 +54,50 @@ function App() {
   const pgWeight = 70 / 100;
   const essayWeight = 30 / 100;
 
+  // Ref untuk debounced sync jawaban ke Supabase
+  const syncAnswersRef = useRef(
+    debounce((nim: string, ans: Record<number, number>, essay: Record<number, string>) => {
+      quizService.updateSessionAnswers(nim, ans, essay);
+    }, 1500)
+  );
+
+  // Refs untuk akses nilai terbaru di dalam beforeunload handler (closure)
+  const userDataRef = useRef<UserData | null>(null);
+  const answersRef = useRef<Record<number, number>>({});
+  const essayAnswersRef = useRef<Record<number, string>>({});
+  const gameStateRef = useRef<GameState>('WELCOME');
+  const closeAttemptRef = useRef(0); // 0 = belum pernah, 1+ = auto-submit
+
+  // Sync refs setiap render
+  useEffect(() => { userDataRef.current = userData; }, [userData]);
+  useEffect(() => { answersRef.current = answers; }, [answers]);
+  useEffect(() => { essayAnswersRef.current = essayAnswers; }, [essayAnswers]);
+  useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
+
   // Route detection on load
   useEffect(() => {
     const path = window.location.pathname;
+
+    // Restore quiz session dari Supabase berdasarkan NIM yang disimpan di localStorage
+    const savedNim = localStorage.getItem('quiz_nim');
+    if (savedNim && (path === '/' || path === '')) {
+      quizService.getActiveSession(savedNim, QUIZ_DURATION_SECONDS).then((session) => {
+        if (session) {
+          setUserData(session.userData);
+          setShuffledQuestions(session.questions);
+          setAnswers(session.answers);
+          setEssayAnswers(session.essayAnswers);
+          setEssayCorrectAnswers(session.essayCorrectAnswers);
+          setTimeLeft(session.timeLeftSeconds);
+          setGameState('QUIZ');
+        } else {
+          // Sesi expired atau tidak ditemukan
+          localStorage.removeItem('quiz_nim');
+          localStorage.removeItem('quiz_close_attempts');
+        }
+      });
+      return;
+    }
 
     if (path === '/' || path === '') {
       return;
@@ -107,6 +157,71 @@ function App() {
     } else {
       setGameState('NOT_FOUND');
     }
+  }, []);
+
+  // beforeunload: warning 1x saat ujian berlangsung, auto-submit pada percobaan ke-2
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const state = gameStateRef.current;
+      if (state !== 'QUIZ' && state !== 'REVIEW') return;
+
+      const attempts = closeAttemptRef.current;
+
+      if (attempts === 0) {
+        // Percobaan pertama: tampilkan peringatan browser
+        closeAttemptRef.current = 1;
+        localStorage.setItem('quiz_close_attempts', '1');
+        e.preventDefault();
+        e.returnValue = '';
+        return;
+      }
+
+      // Percobaan kedua: auto-submit via fetch keepalive (fire-and-forget)
+      const user = userDataRef.current;
+      if (!user) return;
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      if (!supabaseUrl || !supabaseKey) return;
+
+      // Submit jawaban langsung ke Supabase RPC tanpa essay AI scoring (essay_score = 0)
+      fetch(`${supabaseUrl}/rest/v1/rpc/submit_quiz`, {
+        method: 'POST',
+        keepalive: true,
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({
+          p_name: user.name,
+          p_nim: user.nim,
+          p_class: user.class,
+          p_subject: user.subject,
+          p_answers: answersRef.current,
+          p_essay_answers: essayAnswersRef.current,
+          p_essay_score: 0,
+          p_pg_weight: 70 / 100,
+          p_essay_weight: 30 / 100,
+        }),
+      });
+
+      // Hapus sesi dari Supabase via keepalive
+      fetch(`${supabaseUrl}/rest/v1/quiz_sessions?nim=eq.${encodeURIComponent(user.nim)}`, {
+        method: 'DELETE',
+        keepalive: true,
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+        },
+      });
+
+      localStorage.removeItem('quiz_nim');
+      localStorage.removeItem('quiz_close_attempts');
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
 
   const handleStart = async (data: UserData) => {
@@ -182,25 +297,39 @@ function App() {
     // Shuffle: PG questions shuffled, essay appended at end
     const pgQuestions = questions.filter(q => q.type === 'multiple-choice').sort(() => Math.random() - 0.5);
     const essayQuestions = questions.filter(q => q.type === 'essay');
-    setShuffledQuestions([...pgQuestions, ...essayQuestions]);
+    const orderedQuestions = [...pgQuestions, ...essayQuestions];
+    setShuffledQuestions(orderedQuestions);
     setEssayCorrectAnswers(essayRefAnswers);
 
-    localStorage.setItem('quiz_active', 'true');
-    localStorage.setItem('quiz_userData', JSON.stringify(data));
-    localStorage.setItem('quiz_answers', '{}');
+    // Simpan sesi ke Supabase (timer dihitung dari started_at server-side)
+    await quizService.saveSession(data, orderedQuestions, essayRefAnswers);
+    // Simpan NIM ke localStorage — persists bahkan setelah tab/browser ditutup
+    localStorage.setItem('quiz_nim', data.nim);
+    // Reset counter percobaan keluar
+    localStorage.removeItem('quiz_close_attempts');
+    closeAttemptRef.current = 0;
 
     setUserData(data);
     setAnswers({});
     setEssayAnswers({});
+    setTimeLeft(QUIZ_DURATION_SECONDS);
     setGameState('QUIZ');
   };
 
   const handleAnswer = (questionId: number, answerIndex: number) => {
-    setAnswers(prev => ({ ...prev, [questionId]: answerIndex }));
+    setAnswers(prev => {
+      const updated = { ...prev, [questionId]: answerIndex };
+      if (userData) syncAnswersRef.current(userData.nim, updated, essayAnswers);
+      return updated;
+    });
   };
 
   const handleEssayAnswer = (questionId: number, text: string) => {
-    setEssayAnswers(prev => ({ ...prev, [questionId]: text }));
+    setEssayAnswers(prev => {
+      const updated = { ...prev, [questionId]: text };
+      if (userData) syncAnswersRef.current(userData.nim, answers, updated);
+      return updated;
+    });
   };
 
   const handleQuizFinish = () => setGameState('REVIEW');
@@ -267,10 +396,11 @@ function App() {
         }));
       }
 
-      // Clear session
-      localStorage.removeItem('quiz_active');
-      localStorage.removeItem('quiz_userData');
-      localStorage.removeItem('quiz_answers');
+      // Hapus sesi dari Supabase dan localStorage
+      await quizService.deleteSession(userData.nim);
+      localStorage.removeItem('quiz_nim');
+      localStorage.removeItem('quiz_close_attempts');
+      closeAttemptRef.current = 0;
 
       // Step 3: Show result immediately
       setGameState('RESULT');
@@ -312,7 +442,7 @@ function App() {
     }
   };
 
-  // Timer Logic (Global)
+  // Timer Logic (Global) — tidak perlu disimpan, dihitung dari started_at di Supabase
   useEffect(() => {
     if ((gameState === 'QUIZ' || gameState === 'REVIEW') && timeLeft > 0) {
       const timer = setInterval(() => {
@@ -329,6 +459,12 @@ function App() {
   }, [gameState, timeLeft]);
 
   const handleRetry = () => {
+    // Hapus sesi dari Supabase jika ada (fire-and-forget)
+    if (userData) quizService.deleteSession(userData.nim);
+    localStorage.removeItem('quiz_nim');
+    localStorage.removeItem('quiz_close_attempts');
+    closeAttemptRef.current = 0;
+
     setGameState('WELCOME');
     setAnswers({});
     setEssayAnswers({});
@@ -346,9 +482,6 @@ function App() {
     setUserData(null);
     setShuffledQuestions([]);
     setTimeLeft(RESET_TIMER);
-    localStorage.removeItem('quiz_active');
-    localStorage.removeItem('quiz_userData');
-    localStorage.removeItem('quiz_answers');
     window.history.replaceState({}, '', '/');
   };
 
