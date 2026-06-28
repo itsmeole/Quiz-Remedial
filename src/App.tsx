@@ -176,7 +176,8 @@ function App() {
         return;
       }
 
-      // Percobaan kedua: auto-submit via fetch keepalive (fire-and-forget)
+      // Percobaan kedua: sync jawaban terbaru lalu panggil Edge Function via keepalive
+      // Edge Function menangani: essay AI scoring + submit_quiz RPC + hapus sesi
       const user = userDataRef.current;
       if (!user) return;
 
@@ -184,8 +185,24 @@ function App() {
       const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       if (!supabaseUrl || !supabaseKey) return;
 
-      // Submit jawaban langsung ke Supabase RPC tanpa essay AI scoring (essay_score = 0)
-      fetch(`${supabaseUrl}/rest/v1/rpc/submit_quiz`, {
+      // Sync jawaban terakhir ke quiz_sessions dulu (keepalive)
+      fetch(`${supabaseUrl}/rest/v1/quiz_sessions?nim=eq.${encodeURIComponent(user.nim)}`, {
+        method: 'PATCH',
+        keepalive: true,
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify({
+          answers: answersRef.current,
+          essay_answers: essayAnswersRef.current,
+        }),
+      });
+
+      // Panggil Edge Function untuk full submit + AI essay scoring di server
+      fetch(`${supabaseUrl}/functions/v1/auto-submit-quiz`, {
         method: 'POST',
         keepalive: true,
         headers: {
@@ -193,31 +210,12 @@ function App() {
           'apikey': supabaseKey,
           'Authorization': `Bearer ${supabaseKey}`,
         },
-        body: JSON.stringify({
-          p_name: user.name,
-          p_nim: user.nim,
-          p_class: user.class,
-          p_subject: user.subject,
-          p_answers: answersRef.current,
-          p_essay_answers: essayAnswersRef.current,
-          p_essay_score: 0,
-          p_pg_weight: 70 / 100,
-          p_essay_weight: 30 / 100,
-        }),
-      });
-
-      // Hapus sesi dari Supabase via keepalive
-      fetch(`${supabaseUrl}/rest/v1/quiz_sessions?nim=eq.${encodeURIComponent(user.nim)}`, {
-        method: 'DELETE',
-        keepalive: true,
-        headers: {
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`,
-        },
+        body: JSON.stringify({ nim: user.nim }),
       });
 
       localStorage.removeItem('quiz_nim');
       localStorage.removeItem('quiz_close_attempts');
+
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
