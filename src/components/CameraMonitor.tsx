@@ -71,8 +71,12 @@ export const CameraMonitor: React.FC<CameraMonitorProps> = ({ onViolation, onWar
 
             let lastPersonDetectedTime = Date.now();
             let lastNoPeersonWarningTime = 0;
-            // Track if "multiple" violation already fired this session
+            // Track multiple-person warnings & violations
+            let multipleWarningFired = false;
             let multipleViolationFired = false;
+            let lastMultipleWarningTime = 0;
+            // How long after warning before escalating to violation (ms)
+            const MULTIPLE_ESCALATE_MS = 15_000; // 15 seconds
 
             detectionInterval = setInterval(async () => {
                 if (!videoRef.current) return;
@@ -125,15 +129,29 @@ export const CameraMonitor: React.FC<CameraMonitorProps> = ({ onViolation, onWar
                         lastPersonDetectedTime = Date.now();
                         setPersonStatus('multiple');
 
-                        if (!multipleViolationFired && onViolation) {
-                            onViolation(`Terdeteksi ${personCount} orang di depan kamera! Hanya peserta ujian yang boleh ada.`);
+                        if (!multipleWarningFired && onWarning) {
+                            // First detection: issue a warning
+                            onWarning(`Terdeteksi ${personCount} orang di depan kamera! Hanya peserta ujian yang boleh ada.`);
+                            multipleWarningFired = true;
+                            lastMultipleWarningTime = Date.now();
+                        } else if (
+                            multipleWarningFired &&
+                            !multipleViolationFired &&
+                            Date.now() - lastMultipleWarningTime > MULTIPLE_ESCALATE_MS &&
+                            onViolation
+                        ) {
+                            // Still multiple after grace period: escalate to violation
+                            onViolation(`Pelanggaran! Masih terdeteksi ${personCount} orang di depan kamera setelah peringatan.`);
                             multipleViolationFired = true;
                         }
                     } else {
                         // Exactly 1 person — all good
                         lastPersonDetectedTime = Date.now();
                         lastNoPeersonWarningTime = 0; // reset so next absence triggers quickly
+                        // Reset multiple-person tracking when back to 1 person
+                        multipleWarningFired = false;
                         multipleViolationFired = false;
+                        lastMultipleWarningTime = 0;
                         setPersonStatus('ok');
                     }
                 } catch (err) {
