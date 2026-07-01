@@ -38,14 +38,14 @@ export const CameraMonitor: React.FC<CameraMonitorProps> = ({ onViolation, onWar
             setDebugMsg("Requesting camera...");
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                
+
                 if (videoRef.current) {
                     videoRef.current.srcObject = stream;
                     try {
                         await videoRef.current.play();
-                    } catch (e) {}
+                    } catch (e) { }
                 }
-                
+
                 setStatus('active');
                 setDebugMsg("Camera online");
                 startDetectionLoop();
@@ -105,7 +105,7 @@ export const CameraMonitor: React.FC<CameraMonitorProps> = ({ onViolation, onWar
 
                     // ── 2. Person Count Detection ──────────────────────────────
                     const persons = items.filter(item =>
-                        item.label === 'person' && item.confidence > 0.85
+                        item.label === 'person' && item.confidence > 0.9
                     );
                     const personCount = persons.length;
 
@@ -215,9 +215,9 @@ export const CameraMonitor: React.FC<CameraMonitorProps> = ({ onViolation, onWar
 
     // Status badge config
     const personBadge = {
-        ok:         { icon: <User  size={10} />, label: 'Peserta OK',        cls: 'bg-emerald-600/80 text-white' },
-        no_person:  { icon: <UserX size={10} />, label: 'Tidak Ada Orang',   cls: 'bg-amber-500/80  text-white animate-pulse' },
-        multiple:   { icon: <Users size={10} />, label: 'Banyak Orang!',     cls: 'bg-red-600/80    text-white animate-pulse' },
+        ok: { icon: <User size={10} />, label: 'Peserta OK', cls: 'bg-emerald-600/80 text-white' },
+        no_person: { icon: <UserX size={10} />, label: 'Tidak Ada Orang', cls: 'bg-amber-500/80  text-white animate-pulse' },
+        multiple: { icon: <Users size={10} />, label: 'Banyak Orang!', cls: 'bg-red-600/80    text-white animate-pulse' },
     }[personStatus];
 
     return (
