@@ -10,6 +10,7 @@ import { quizService } from './services/quizService';
 import { groqService } from './services/groqService';
 import { supabase } from './utils/supabaseClient';
 import bgImage from './assets/bg.png';
+import { useTheme } from './context/ThemeContext';
 
 const MAX_STRIKES = 5;
 const RESET_TIMER = 300;
@@ -483,6 +484,8 @@ function App() {
     window.history.replaceState({}, '', '/');
   };
 
+  const { theme, toggleTheme } = useTheme();
+
   return (
     <div
       className="min-h-screen text-white font-sans antialiased"
@@ -494,6 +497,42 @@ function App() {
         backgroundRepeat: 'no-repeat',
       }}
     >
+      {/* ── Theme Toggle Button ── */}
+      <button
+        id="theme-toggle-btn"
+        onClick={toggleTheme}
+        aria-label={theme === 'dark' ? 'Aktifkan Mode Terang' : 'Aktifkan Mode Gelap'}
+        title={theme === 'dark' ? 'Mode Terang' : 'Mode Gelap'}
+        className="fixed top-4 right-4 z-[100] flex items-center gap-2 px-3 py-2 rounded-full backdrop-blur-xl border shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 select-none"
+        style={{
+          background: theme === 'dark'
+            ? 'rgba(255,255,255,0.10)'
+            : 'rgba(0,0,0,0.08)',
+          borderColor: theme === 'dark'
+            ? 'rgba(255,255,255,0.18)'
+            : 'rgba(0,0,0,0.15)',
+          color: theme === 'dark' ? '#ffffff' : '#111827',
+          boxShadow: theme === 'dark'
+            ? '0 4px 20px rgba(0,0,0,0.4)'
+            : '0 4px 20px rgba(0,0,0,0.12)',
+        }}
+      >
+        {theme === 'dark' ? (
+          /* Sun icon */
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+          </svg>
+        ) : (
+          /* Moon icon */
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+          </svg>
+        )}
+        <span className="text-sm font-semibold">
+          {theme === 'dark' ? 'Terang' : 'Gelap'}
+        </span>
+      </button>
       {gameState === 'WELCOME' && <WelcomeScreen onStart={handleStart} />}
 
       {gameState === 'QUIZ' && (

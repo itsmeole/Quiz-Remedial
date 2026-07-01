@@ -5,19 +5,207 @@
   --color-dicoding-primary: #2d3e50;
 }
 
+/* ── DARK MODE (default) ─────────────────────────────────────── */
+:root,
+[data-theme="dark"] {
+  --bg-body: transparent;
+  --text-base: #ffffff;
+  --text-muted: #9ca3af;
+  --text-subtle: #6b7280;
+
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-hover: rgba(255, 255, 255, 0.10);
+  --surface-input: rgba(17, 24, 39, 0.20);
+
+  --border: rgba(255, 255, 255, 0.10);
+  --border-input: rgba(107, 114, 128, 0.50);
+
+  --glass-bg-start: rgba(255, 255, 255, 0.08);
+  --glass-bg-end: rgba(255, 255, 255, 0.001);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.36);
+
+  --dropdown-bg: #1a1c1e;
+  --dropdown-border: #374151;
+  --dropdown-hover: rgba(37, 99, 235, 0.10);
+  --dropdown-item-border: #1f2937;
+
+  --option-unselected-bg: rgba(107, 114, 128, 0.30);
+  --option-unselected-border: rgba(255, 255, 255, 0.10);
+  --option-unselected-text: #e5e7eb;
+
+  --textarea-bg: rgba(31, 41, 55, 0.60);
+  --textarea-border: rgba(168, 85, 247, 0.30);
+
+  --blocked-overlay: rgba(0, 0, 0, 0.60);
+
+  --select-bg: rgba(17, 24, 39, 0.20);
+}
+
+/* ── LIGHT MODE ──────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg-body: transparent;
+  --text-base: #111827;
+  --text-muted: #374151;
+  --text-subtle: #6b7280;
+
+  --surface: rgba(255, 255, 255, 0.70);
+  --surface-hover: rgba(255, 255, 255, 0.85);
+  --surface-input: rgba(255, 255, 255, 0.80);
+
+  --border: rgba(0, 0, 0, 0.10);
+  --border-input: rgba(0, 0, 0, 0.25);
+
+  --glass-bg-start: rgba(255, 255, 255, 0.72);
+  --glass-bg-end: rgba(255, 255, 255, 0.45);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.12);
+
+  --dropdown-bg: #ffffff;
+  --dropdown-border: #d1d5db;
+  --dropdown-hover: rgba(37, 99, 235, 0.08);
+  --dropdown-item-border: #f3f4f6;
+
+  --option-unselected-bg: rgba(243, 244, 246, 0.80);
+  --option-unselected-border: rgba(0, 0, 0, 0.12);
+  --option-unselected-text: #1f2937;
+
+  --textarea-bg: rgba(249, 250, 251, 0.90);
+  --textarea-border: rgba(168, 85, 247, 0.40);
+
+  --blocked-overlay: rgba(255, 255, 255, 0.50);
+
+  --select-bg: rgba(255, 255, 255, 0.80);
+}
+
+/* ── BASE STYLES ─────────────────────────────────────────────── */
 @layer base {
   body {
-    @apply text-white font-sans antialiased;
+    @apply font-sans antialiased;
+    color: var(--text-base);
     background-image: url('./assets/bg.png');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
     background-repeat: no-repeat;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Light mode body overlay for readability */
+  [data-theme="light"] body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(2px);
+    pointer-events: none;
+    z-index: 0;
   }
 }
 
+/* ── GLASS PANEL ─────────────────────────────────────────────── */
 .glass-panel {
-  @apply bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.36);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.001));
+  @apply backdrop-blur-2xl rounded-2xl;
+  border: 1px solid var(--border);
+  box-shadow: var(--glass-shadow);
+  background: linear-gradient(135deg, var(--glass-bg-start), var(--glass-bg-end));
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* ── LIGHT MODE COMPONENT OVERRIDES ─────────────────────────── */
+
+/* Text overrides */
+[data-theme="light"] .text-white {
+  color: var(--text-base) !important;
+}
+[data-theme="light"] .text-gray-400,
+[data-theme="light"] .text-gray-300 {
+  color: var(--text-muted) !important;
+}
+[data-theme="light"] .text-gray-500,
+[data-theme="light"] .text-gray-600 {
+  color: var(--text-subtle) !important;
+}
+
+/* Inputs and selects */
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background: var(--surface-input) !important;
+  border-color: var(--border-input) !important;
+  color: var(--text-base) !important;
+}
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: var(--text-subtle) !important;
+}
+[data-theme="light"] select option {
+  background: #ffffff;
+  color: #111827;
+}
+
+/* Suggestion dropdown */
+[data-theme="light"] .bg-\[#1a1c1e\] {
+  background: var(--dropdown-bg) !important;
+}
+[data-theme="light"] .border-gray-700 {
+  border-color: var(--dropdown-border) !important;
+}
+[data-theme="light"] .border-gray-800 {
+  border-color: var(--dropdown-item-border) !important;
+}
+[data-theme="light"] .hover\:bg-blue-600\/10:hover {
+  background-color: var(--dropdown-hover) !important;
+}
+
+/* Quiz option buttons */
+[data-theme="light"] .bg-gray-500\/30 {
+  background: var(--option-unselected-bg) !important;
+}
+[data-theme="light"] .border-white\/10 {
+  border-color: var(--option-unselected-border) !important;
+}
+
+/* Essay textarea */
+[data-theme="light"] .bg-gray-800\/60 {
+  background: var(--textarea-bg) !important;
+}
+
+/* Nav bottom / sidebar surfaces */
+[data-theme="light"] .bg-gray-900\/20 {
+  background: var(--surface-input) !important;
+}
+[data-theme="light"] .bg-gray-900\/50 {
+  background: rgba(255, 255, 255, 0.50) !important;
+}
+[data-theme="light"] .bg-gray-600\/40,
+[data-theme="light"] .bg-gray-600\/50 {
+  background: rgba(229, 231, 235, 0.80) !important;
+}
+
+/* Dividers */
+[data-theme="light"] .border-gray-700\/50 {
+  border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Blocked overlay */
+[data-theme="light"] .bg-black\/60 {
+  background: var(--blocked-overlay) !important;
+}
+[data-theme="light"] .bg-black\/80 {
+  background: rgba(255, 255, 255, 0.80) !important;
+}
+
+/* Timer (non-urgent) */
+[data-theme="light"] .bg-gray-600\/50.border-gray-400 {
+  background: rgba(229, 231, 235, 0.80) !important;
+}
+
+/* Question map unanswered */
+[data-theme="light"] .bg-gray-600\/40.border-gray-700 {
+  background: rgba(229, 231, 235, 0.60) !important;
+  border-color: rgba(156, 163, 175, 0.60) !important;
+}
+
+/* Review screen & modals */
+[data-theme="light"] .bg-black\/70 {
+  background: rgba(255, 255, 255, 0.70) !important;
 }
