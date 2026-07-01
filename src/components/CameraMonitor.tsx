@@ -105,7 +105,7 @@ export const CameraMonitor: React.FC<CameraMonitorProps> = ({ onViolation, onWar
 
                     // ── 2. Person Count Detection ──────────────────────────────
                     const persons = items.filter(item =>
-                        item.label === 'person' && item.confidence > 0.9
+                        item.label === 'person' && item.confidence > 0.93
                     );
                     const personCount = persons.length;
 
